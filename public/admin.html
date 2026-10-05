@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Painel - Dev Quest</title>
+<style>
+@font-face{font-family:"Geist";font-weight:100 900;font-display:swap;src:url(fonts/geist-latin-wght-normal.woff2) format("woff2")}
+@font-face{font-family:"Geist Mono";font-weight:100 900;font-display:swap;src:url(fonts/geist-mono-latin-wght-normal.woff2) format("woff2")}
+:root{--bg:#0a0e1a;--panel:#121a2e;--line:#26334f;--text:#e8edfa;--mut:#8c98b8;--green:#5ccf93;--blue:#5aaee0;--pink:#e58fb8;--yellow:#e3b44f;--red:#ee7a7a;
+--mono:"Geist Mono",Consolas,monospace;--sans:"Geist","Segoe UI",system-ui,sans-serif}
+*{box-sizing:border-box;margin:0}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);padding:24px 16px 48px}
+.wrap{max-width:1000px;margin:0 auto;display:grid;gap:16px}
+header{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+h1{font-size:1.6rem;letter-spacing:-.03em} h1 b{color:var(--green)}
+h2{font-size:1rem;color:var(--blue);margin-bottom:12px}
+.sp{flex:1}
+.btn{font:600 .95rem var(--sans);color:#04210f;background:var(--green);border:0;border-radius:10px;padding:10px 16px;cursor:pointer}
+.btn.danger{background:var(--red);color:#2a0606}
+.btn.ghost{background:transparent;color:var(--text);border:1px solid var(--line)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
+.kpi b{display:block;font:800 2rem var(--mono);color:var(--yellow)} .kpi span{color:var(--mut);font-size:.9rem}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:760px){.cols{grid-template-columns:1fr}}
+.bars{display:grid;gap:8px}
+.bar{display:grid;grid-template-columns:130px 1fr 40px;gap:10px;align-items:center;font-size:.9rem}
+.bar i{display:block;height:14px;border-radius:99px;background:var(--green);min-width:2px}
+.bar em{font-style:normal;font-family:var(--mono);color:var(--mut);text-align:right}
+.hours{display:flex;align-items:flex-end;gap:6px;height:130px}
+.hours div{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px;height:100%;font:.75rem var(--mono);color:var(--mut)}
+.hours i{display:block;width:100%;background:var(--blue);border-radius:6px 6px 0 0;min-height:2px}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+td,th{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line)} th{color:var(--mut);font-weight:500}
+.none{color:var(--mut)}
+#login{max-width:340px;margin:12vh auto 0;display:grid;gap:12px}
+input{font:1.05rem var(--sans);padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--text)}
+.err{color:var(--red)}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<div id="login" class="card hidden">
+  <h2>Painel do organizador</h2>
+  <p class="none" id="loginMsg">Digite a senha (ADMIN_PASS).</p>
+  <input id="pass" type="password" placeholder="Senha" autocomplete="current-password">
+  <button class="btn" id="enter">Entrar</button>
+</div>
+<div class="wrap hidden" id="panel">
+  <header><h1>Dev <b>Quest</b> · painel</h1><span class="sp"></span><span class="none" id="upd"></span><button class="btn ghost" id="refresh">Atualizar</button><button class="btn danger" id="reset">🗑 Zerar dados</button></header>
+  <div class="kpis">
+    <div class="card kpi"><b id="kTotal">0</b><span>partidas concluídas</span></div>
+    <div class="card kpi"><b id="kPts">0</b><span>pontuação média</span></div>
+    <div class="card kpi"><b id="kTime">0</b><span>tempo médio</span></div>
+    <div class="card kpi"><b id="kRank">0</b><span>pessoas no ranking</span></div>
+    <div class="card kpi"><b id="kMode" style="font-size:1.3rem">-</b><span>solo / duelo · normal / difícil</span></div>
+  </div>
+  <div class="cols">
+    <div class="card"><h2>Partidas por hora (últimas 12)</h2><div class="hours" id="hours"></div></div>
+    <div class="card"><h2>Perfis mais comuns</h2><div class="bars" id="perfis"></div></div>
+  </div>
+  <div class="card"><h2>🏆 Ranking (top 20)</h2><div id="ranking"></div></div>
+</div>
+<script>
+const $ = s => document.querySelector(s);
+const NAMES = { front:'🎨 Experiências', back:'🏗️ Sistemas', ia:'🤖 Dados e IA', games:'🎮 Criador de Mundos', seg:'🛡️ Caçador de Falhas' };
+let pass = ''; try { pass = sessionStorage.getItem('dq_admin') || ''; } catch {}
+const api = path => fetch(path, { headers: pass ? { 'x-admin-pass': pass } : {}, cache: 'no-store' });
+const mmss = s => Math.floor(s / 60) + 'min ' + String(s % 60).padStart(2, '0') + 's';
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+async function load() {
+  let r; try { r = await api('/api/stats'); } catch { return; }
+  if (r.status === 401) {
+    $('#panel').classList.add('hidden'); $('#login').classList.remove('hidden');
+    $('#loginMsg').innerHTML = pass ? '<span class="err">Senha incorreta.</span>' : 'Sem acesso. Abra este painel no próprio notebook (localhost) ou digite a senha ADMIN_PASS definida ao iniciar o servidor.';
+    return;
+  }
+  const d = await r.json();
+  $('#login').classList.add('hidden'); $('#panel').classList.remove('hidden');
+  $('#kTotal').textContent = d.total; $('#kPts').textContent = d.pontosMedio; $('#kTime').textContent = d.total ? mmss(d.duracaoMedia) : '-'; $('#kRank').textContent = d.totalRanking;
+  $('#kMode').textContent = d.modos.solo + ' / ' + d.modos.duelo + ' · ' + d.difs.normal + ' / ' + d.difs.hard;
+  const max = Math.max(1, ...d.porHora.map(h => h.n));
+  $('#hours').innerHTML = d.porHora.map(h => `<div title="${h.n} partidas">${h.n || ''}<i style="height:${Math.round(h.n / max * 100)}%"></i>${esc(h.h)}</div>`).join('');
+  const pe = Object.entries(d.perfis).sort((a, b) => b[1] - a[1]), pm = Math.max(1, ...pe.map(x => x[1]));
+  $('#perfis').innerHTML = pe.length ? pe.map(([k, n]) => `<div class="bar"><span>${esc(NAMES[k] || k)}</span><i style="width:${n / pm * 100}%"></i><em>${n}</em></div>`).join('') : '<p class="none">Ainda sem partidas.</p>';
+  $('#ranking').innerHTML = d.ranking.length
+    ? `<table><tr><th>#</th><th>Nome</th><th>Pontos</th><th>Perfil</th><th>Quando</th></tr>${d.ranking.map((c, i) => `<tr><td>${i + 1}</td><td>${esc(c.n)}</td><td>${c.s}</td><td>${esc(NAMES[c.p] || c.p)}</td><td>${c.t ? new Date(c.t).toLocaleString('pt-BR') : ''}</td></tr>`).join('')}</table>`
+    : '<p class="none">Ninguém no ranking ainda.</p>';
+  $('#upd').textContent = 'atualizado ' + new Date().toLocaleTimeString('pt-BR');
+}
+$('#enter').onclick = () => { pass = $('#pass').value; try { sessionStorage.setItem('dq_admin', pass); } catch {} load(); };
+$('#pass').addEventListener('keydown', e => { if (e.key === 'Enter') $('#enter').click(); });
+$('#refresh').onclick = load;
+// zera partidas, estatísticas e ranking (também na tela grande). Pede confirmação.
+$('#reset').onclick = async () => {
+  if (!confirm('Zerar TODOS os dados?\n\nIsso apaga o ranking e as estatísticas das partidas. Não dá para desfazer.')) return;
+  const r = await fetch('/api/reset', { method: 'POST', headers: { 'x-devquest': 'zerar', ...(pass ? { 'x-admin-pass': pass } : {}) } });
+  if (!r.ok) { alert('Não consegui zerar (erro ' + r.status + ').'); return; }
+  load();
+};
+load(); setInterval(load, 10000);
+</script>
+</body>
+</html>

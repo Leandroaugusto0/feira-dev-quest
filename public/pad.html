@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#0a0e1a">
+<title>Controle - Dev Quest</title>
+<style>
+@font-face{font-family:"Geist";font-weight:100 900;font-display:swap;src:url(fonts/geist-latin-wght-normal.woff2) format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:"Geist";font-weight:100 900;font-display:swap;src:url(fonts/geist-latin-ext-wght-normal.woff2) format("woff2");unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:"Geist Mono";font-weight:100 900;font-display:swap;src:url(fonts/geist-mono-latin-wght-normal.woff2) format("woff2")}
+:root{--bg:#0a0e1a;--panel:#121a2e;--line:#26334f;--text:#e8edfa;--mut:#8c98b8;--green:#5ccf93;--blue:#5aaee0;--pink:#e58fb8;--yellow:#e3b44f;--red:#ee7a7a;
+--mono:"Geist Mono","JetBrains Mono","Cascadia Code",Consolas,monospace;--sans:"Geist","Segoe UI",system-ui,sans-serif}
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--sans);overflow:hidden;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+#app{height:100%;display:flex;flex-direction:column;padding:max(14px,env(safe-area-inset-top)) 14px max(14px,env(safe-area-inset-bottom))}
+.top{display:flex;align-items:center;justify-content:space-between;font:500 .85rem var(--mono);color:var(--mut);padding-bottom:10px}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--red);margin-right:6px}
+.dot.on{background:var(--green)}
+body[data-slot="1"] .dot.on{background:var(--pink)}
+.score{color:var(--yellow);font-size:1.3rem;font-weight:600}
+main{flex:1;display:flex;flex-direction:column;justify-content:center;gap:14px;min-height:0}
+.center{text-align:center}
+.ico{font-size:4.5rem}
+h1{font:700 1.7rem var(--sans);letter-spacing:-.03em} h1 b{color:var(--green)}
+p{color:var(--mut);line-height:1.5;font-size:1.05rem}
+.btn{display:block;font:700 1.25rem var(--sans);color:#04210f;background:var(--green);border:0;border-radius:14px;padding:20px;width:100%;cursor:pointer}
+.btn:active{transform:scale(.97)}
+.btn.ghost{background:transparent;color:var(--text);border:1px solid var(--line);font-size:1rem;font-weight:500;padding:14px}
+.btn.sm{font-size:1.05rem;padding:14px}
+.btn:disabled{opacity:.4}
+.grid{flex:1;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:10px;min-height:0;max-height:70vh}
+.cell{background:var(--panel);border:1px solid var(--line);border-radius:14px;font:700 1.6rem var(--mono);color:var(--line);transition:background .06s;padding:0}
+.cell:active{background:#22305a;border-color:var(--blue)}
+.cell.b,.cell.f{font-size:3rem;animation:pop .15s ease-out}
+.cell.b{border-color:var(--red);background:#2a1620}
+.cell.f{border-color:var(--yellow);border-style:dashed;background:#2a2412}
+.cell.q{font-size:3rem;animation:pop .15s ease-out;border-color:var(--blue);background:#13243a}
+@keyframes pop{from{transform:scale(.4)}to{transform:none}}
+.list{display:grid;gap:10px;overflow:auto}
+.opt{display:flex;align-items:center;gap:14px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;color:var(--text);font:500 1.1rem var(--sans);text-align:left;width:100%}
+.opt .e{font-size:2rem}
+.opt:active{border-color:var(--pink);background:#1a2340}
+.opt:disabled{opacity:.2}
+.q{font-weight:700;font-size:1.2rem;text-align:center;letter-spacing:-.01em}
+.hint{font:600 .9rem var(--sans);color:var(--blue);text-align:center}
+input[type=text],input:not([type]),input[type=email],input[type=tel]{width:100%;font:1.2rem var(--sans);padding:16px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--text);user-select:text;-webkit-user-select:text}
+.tag{font:.8rem var(--sans);color:var(--blue)}
+.big{font:800 2.6rem var(--mono);color:var(--yellow)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;display:grid;gap:10px}
+.card h2{color:var(--pink);font-size:1.3rem}
+.hidden{display:none!important}
+.okmsg{color:var(--green);text-align:center}
+.bigcount{font:800 9rem var(--mono);color:var(--green);line-height:1;animation:cnt .5s ease-out}
+@keyframes cnt{from{transform:scale(1.6);opacity:0}to{transform:none;opacity:1}}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.seg button{font:600 1rem var(--sans);color:var(--mut);background:transparent;border:1px solid var(--line);border-radius:12px;padding:12px}
+.seg button.on{color:var(--text);border-color:var(--blue);background:rgba(90,174,224,.14)}
+.btn.pink{background:var(--pink);color:#2a0618}
+.tbar{height:8px;border-radius:99px;background:var(--line);overflow:hidden;flex:none}
+.tbar i{display:block;height:100%;width:100%;background:var(--green)}
+.banner{text-align:center;font:700 1.15rem var(--sans);padding:12px;border-radius:12px;background:rgba(227,180,79,.12);color:var(--yellow)}
+.banner.lose{background:rgba(238,122,122,.12);color:var(--red)}
+.flash-good{animation:g .25s}.flash-bad{animation:b .35s}
+@keyframes g{50%{background:rgba(92,207,147,.25)}}@keyframes b{50%{background:rgba(238,122,122,.35)}}
+#ov{position:fixed;inset:0;z-index:20;background:rgba(10,14,26,.96);display:flex;flex-direction:column;align-items:center;gap:12px;padding:max(14px,env(safe-area-inset-top)) 14px max(14px,env(safe-area-inset-bottom))}
+#ov img{flex:1;min-height:0;max-width:100%;object-fit:contain;border-radius:12px;-webkit-user-select:auto;user-select:auto;-webkit-touch-callout:default}
+#ov .row{display:flex;gap:10px;width:100%}
+@media(prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="top"><span><i class="dot" id="dot"></i><span id="status">conectando…</span></span><span class="score" id="score"></span></div>
+  <main id="view"></main>
+</div>
+<div id="ov" class="hidden"></div>
+<script>
+const $ = s => document.querySelector(s);
+const params = new URLSearchParams(location.search);
+let room = (params.get('r') || '').toUpperCase();
+// identifica este aparelho: permite reconectar na mesma sessão, mas bloqueia outro celular
+let token;
+try { token = sessionStorage.getItem('dq_k'); if (!token) sessionStorage.setItem('dq_k', token = Math.random().toString(36).slice(2, 12)); } catch {}
+token = token || Math.random().toString(36).slice(2, 12);
+
+let ws, ended = false, retry = 0, lastView = null, mySlot = 0;
+let wantQueue = false, qName = '', busyMode = false;      // fila de espera
+const view = $('#view');
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const send = o => { if (ws && ws.readyState === 1) ws.send(JSON.stringify({ t: 'in', ...o })); };
+const sendRaw = o => { if (ws && ws.readyState === 1) ws.send(JSON.stringify(o)); };
+const buzz = ms => { try { navigator.vibrate && navigator.vibrate(ms) } catch {} };
+
+function message(ico, title, text, extra = '') {
+  view.innerHTML = `<div class="center"><div class="ico">${ico}</div><h1>${title}</h1><p style="margin-top:10px">${text}</p></div>${extra}`;
+}
+function applyPlayerColor() { document.body.dataset.slot = mySlot; }
+function setStatus(on, txt) { $('#dot').className = 'dot' + (on ? ' on' : ''); $('#status').textContent = txt; }
+
+function connect() {
+  if (!room) return message('🤔', 'Sem código', 'Escaneie o QR code que aparece na tela grande.');
+  const sock = ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws?role=pad&r=${room}&k=${token}`);
+  sock.onopen = () => { retry = 0; };
+  sock.onmessage = e => {
+    if (sock !== ws) return;
+    const m = JSON.parse(e.data);
+    if (m.t === 'joined') { busyMode = false; wantQueue = false; mySlot = m.slot || 0; setStatus(true, 'sala ' + room + (mySlot ? ' · J2' : '')); applyPlayerColor(); if (!lastView) message('📡', 'Conectado!', 'Olhe para a tela grande.'); }
+    else if (m.t === 'view') { lastView = m; render(m); }
+    else if (m.t === 'busy') { busyMode = true; setStatus(false, 'aguardando'); if (!m.queued && wantQueue) sendRaw({ t: 'queue-join', name: qName }); else busyView(m); }
+    else if (m.t === 'queue') { if (busyMode) busyView({ queued: true, pos: m.pos, n: m.n }); }
+    else if (m.t === 'queue-full') { wantQueue = false; busyView({ queued: false, full: true, reason: 'ocupada' }); }
+    else if (m.t === 'go') {                                   // chegou a sua vez: entra na sala nova
+      buzz([200, 100, 200]); wantQueue = false; busyMode = false; lastView = null; room = m.code;
+      try { history.replaceState(null, '', '?r=' + room); } catch {}
+      message('🎉', 'É a sua vez!', 'Entrando no jogo…');
+      const old = sock; connect(); try { old.close(); } catch {}
+    }
+    else if (m.t === 'err') { ended = true; setStatus(false, 'sem conexão'); message('⌛', 'Sessão expirada', 'Escaneie o QR code atual da tela grande.'); }
+    else if (m.t === 'end') { ended = true; setStatus(false, 'encerrada'); message('👋', 'Sessão encerrada', 'Valeu por jogar! Para jogar de novo, escaneie o novo QR code da tela grande.'); }
+  };
+  sock.onclose = () => {
+    if (sock !== ws || ended) return;
+    setStatus(false, 'reconectando…');
+    setTimeout(() => { if (sock === ws) connect(); }, Math.min(3000, 400 + retry++ * 400));
+  };
+}
+
+/* ---------- fila de espera ---------- */
+function busyView(m) {
+  if (m.queued) {
+    view.innerHTML = `<div class="center"><div class="ico">⏳</div><h1>Você está na fila</h1><p style="margin-top:10px">Sua posição: <b style="color:var(--yellow);font-size:1.6rem">${m.pos}</b>${m.n ? ' de ' + m.n : ''}<br>Deixe esta tela aberta. Quando chegar a sua vez, o jogo começa sozinho.</p></div><button class="btn ghost" id="lv">Sair da fila</button>`;
+    $('#lv').onclick = () => { wantQueue = false; sendRaw({ t: 'queue-leave' }); busyView({ queued: false, reason: 'ocupada' }); };
+    return;
+  }
+  const why = m.full ? 'A fila está cheia agora. Tente de novo em instantes.'
+    : m.reason === 'reservada' ? 'A vez desta sessão é de outra pessoa da fila.'
+    : 'Outra pessoa está jogando agora.';
+  view.innerHTML = `<div class="center"><div class="ico">🔒</div><h1>Sessão ocupada</h1><p style="margin-top:10px">${why} Entre na fila e jogue assim que ela liberar.</p></div>
+    <input id="qn" maxlength="14" placeholder="Seu apelido (aparece na tela)" autocomplete="off" value="${esc(qName)}">
+    <button class="btn" id="qj">Entrar na fila</button>`;
+  $('#qj').onclick = () => { qName = $('#qn').value.trim(); wantQueue = true; sendRaw({ t: 'queue-join', name: qName }); $('#qj').disabled = true; };
+}
+
+/* ---------- telas ---------- */
+function render(m) {
+  const sc = $('#score');
+  sc.textContent = m.score != null ? m.score + ' pts' + (m.opp != null ? ' · rival ' + m.opp : '') : '';
+  if (m.fx === 'good') { buzz(25); document.body.classList.remove('flash-good'); void document.body.offsetWidth; document.body.classList.add('flash-good'); }
+  if (m.fx === 'bad') { buzz([90, 40, 90]); document.body.classList.remove('flash-bad'); void document.body.offsetWidth; document.body.classList.add('flash-bad'); }
+
+  if (m.screen === 'menu') {
+    view.innerHTML = `<div class="center"><div class="ico">🎮</div><h1>Dev <b>Quest</b></h1><p style="margin-top:10px">Como você quer jogar?</p></div>
+      <button class="btn" id="m1">👤 1 jogador</button><button class="btn pink" id="m2">⚔ Duelo com um amigo</button>
+      <div class="hint">DIFICULDADE</div><div class="seg"><button data-d="normal" class="${m.diff === 'normal' ? 'on' : ''}">Normal</button><button data-d="hard" class="${m.diff === 'hard' ? 'on' : ''}">Difícil 🔥</button></div>`;
+    $('#m1').onclick = () => { buzz(20); send({ k: 'mode', v: 'solo' }); };
+    $('#m2').onclick = () => { buzz(20); send({ k: 'mode', v: 'duel' }); };
+    view.querySelectorAll('.seg button').forEach(b => b.onclick = () => send({ k: 'diff', v: b.dataset.d }));
+  }
+  else if (m.screen === 'hold') {
+    view.innerHTML = `<div class="center"><div class="ico">${esc(m.ico || '⏳')}</div><h1>${esc(m.title || '')}</h1><p style="margin-top:10px">${esc(m.text || '')}</p></div>${m.cancel ? '<button class="btn ghost" id="cx">' + esc(m.cancel) + '</button>' : ''}`;
+    if (m.cancel) $('#cx').onclick = () => send({ k: 'cancel' });
+  }
+  else if (m.screen === 'start' || m.screen === 'panel') {
+    view.innerHTML = `<div class="center"><div class="ico">${esc(m.ico || '🎮')}</div><h1>${esc(m.title || 'Dev Quest')}</h1><p style="margin-top:10px">${esc(m.text || '')}</p></div><button class="btn" id="go" ${m.wait ? 'disabled' : ''}>${esc(m.wait ? 'Aguardando o outro jogador…' : (m.btn || 'Começar'))}</button>`;
+    $('#go').onclick = e => { e.target.disabled = true; buzz(20); send({ k: 'btn' }); };
+  }
+  else if (m.screen === 'count') {
+    view.innerHTML = `<div class="center"><div class="hint">${esc(m.label || '')}</div><div class="bigcount">${esc(m.n)}</div></div>`;
+    buzz(m.n === 'JÁ!' ? 60 : 15);
+  }
+  else if (m.screen === 'bugs') {
+    if (!$('#grid')) {
+      view.innerHTML = `<div class="hint">TOQUE NO BOTÃO ONDE O 🐞 OU 🦟 APARECER!<br>(💡 é feature, não toque!)${m.opp != null ? '<br>Duelo: quem tocar primeiro leva o ponto!' : ''}</div><div class="grid" id="grid"></div>`;
+      for (let i = 0; i < 9; i++) {
+        const b = document.createElement('button'); b.className = 'cell'; b.textContent = i + 1; b.dataset.v = '';
+        b.addEventListener('pointerdown', e => { e.preventDefault(); send({ k: 'cell', v: i }); });
+        $('#grid').appendChild(b);
+      }
+    }
+    // espelha os 9 quadrantes da tela grande: 'b' = bug, 'f' = feature
+    const cs = m.cells || [];
+    document.querySelectorAll('#grid .cell').forEach((b, i) => {
+      const v = cs[i] || '';
+      if (b.dataset.v === v) return;
+      b.dataset.v = v; b.textContent = v === 'b' ? '🐞' : v === 'f' ? '💡' : v === 'q' ? '🦟' : i + 1; b.className = 'cell' + (v ? ' ' + v : '');
+    });
+  }
+  else if (m.screen === 'order') {
+    view.innerHTML = `<div class="tbar"><i id="tb"></i></div><div class="hint">TOQUE NA ORDEM CERTA DO CICLO · 1 MINUTO</div><div class="list">${m.items.map((it, i) =>
+      `<button class="opt" data-i="${i}" ${m.done.includes(i) ? 'disabled' : ''}><span class="e">${esc(it.i)}</span>${esc(it.n)}</button>`).join('')}</div>`;
+    view.querySelectorAll('.opt').forEach(b => b.onclick = () => send({ k: 'step', v: +b.dataset.i }));
+    if (m.left != null) {                                      // barra do relógio, em contagem regressiva até o fim da fase
+      const tb = $('#tb'), pct = Math.max(0, m.left / (m.total || 60000) * 100);
+      tb.style.width = pct + '%'; tb.style.background = pct > 50 ? 'var(--green)' : pct > 20 ? 'var(--yellow)' : 'var(--red)';
+      void tb.offsetWidth; tb.style.transition = 'width ' + m.left + 'ms linear'; tb.style.width = '0%';
+    }
+  }
+  else if (m.screen === 'quiz') {
+    view.innerHTML = `<div class="hint">PERGUNTA ${m.n} DE ${m.of}</div><div class="q">${esc(m.q)}</div><div class="list">${m.opts.map((o, i) => `<button class="opt" data-i="${i}">${esc(o)}</button>`).join('')}</div>`;
+    view.querySelectorAll('.opt').forEach(b => b.onclick = () => { buzz(20); send({ k: 'opt', v: +b.dataset.i }); });
+  }
+  else if (m.screen === 'final') { renderFinal(m); return; }
+  view.style.justifyContent = ''; view.style.overflow = '';
+}
+
+function renderFinal(m) {
+  const p = m.profile;
+  const dl = m.duel ? `<div class="banner ${m.duel.win === false ? 'lose' : ''}">${m.duel.win === true ? '🏆 Você venceu o duelo!' : m.duel.win === false ? '😅 O rival levou desta vez!' : '🤝 Empate!'} <span style="font-weight:500">(${m.total} x ${m.duel.opp})</span></div>` : '';
+  view.innerHTML = `${dl}<div class="center"><div class="big">${m.total} pts</div></div>
+    <div class="card"><div style="font-size:2.6rem">${esc(p.e)}</div><h2>${esc(p.t)}</h2><p>${esc(p.d)}</p>
+    <div style="display:flex;flex-wrap:wrap;gap:8px">${p.tags.map(t => `<span class="tag">#${esc(t)}</span>`).join('')}</div></div>
+    ${m.saved ? `<p class="okmsg">✔ Você está no ranking!</p>` : `<input id="nm" maxlength="14" placeholder="Seu nome para o ranking" autocomplete="off"><button class="btn" id="sv">Salvar no ranking</button>`}
+    <button class="btn ghost" id="cardBtn">📸 Salvar meu cartão de perfil</button>
+    ${m.link ? `<a class="btn ghost" style="text-align:center;text-decoration:none" href="${esc(m.link)}" target="_blank" rel="noopener">🎓 Conhecer o curso</a>` : ''}
+    <p class="center" style="font-size:.9rem">${esc(m.contato || '')}</p>
+    <button class="btn ghost" id="again">↻ Encerrar e liberar o jogo</button>`;
+  if (!m.saved) $('#sv').onclick = () => { send({ k: 'save', v: $('#nm').value }); $('#sv').disabled = true; };
+  $('#again').onclick = () => send({ k: 'again' });
+  $('#cardBtn').onclick = () => showCard(m);
+  view.style.justifyContent = 'flex-start'; view.style.overflow = 'auto';
+}
+
+/* ---------- cartão de perfil (imagem para stories) ---------- */
+function rr(x, a, b, w, h, r) { x.beginPath(); x.moveTo(a + r, b); x.arcTo(a + w, b, a + w, b + h, r); x.arcTo(a + w, b + h, a, b + h, r); x.arcTo(a, b + h, a, b, r); x.arcTo(a, b, a + w, b, r); x.closePath(); }
+function wrap(x, text, cx, y, maxW, lh) {
+  const words = String(text).split(' '); let line = '';
+  for (const w of words) {
+    const t = line ? line + ' ' + w : w;
+    if (x.measureText(t).width > maxW && line) { x.fillText(line, cx, y); y += lh; line = w; } else line = t;
+  }
+  x.fillText(line, cx, y); return y + lh;
+}
+async function makeCard(m) {
+  try { await Promise.all([document.fonts.load('800 80px Geist'), document.fonts.load('500 40px Geist'), document.fonts.load('700 80px "Geist Mono"')]); } catch {}
+  const W = 1080, Hh = 1920, c = document.createElement('canvas'); c.width = W; c.height = Hh;
+  const x = c.getContext('2d'), p = m.profile, cx = W / 2;
+  const sans = '"Geist","Segoe UI",system-ui,sans-serif', mono = '"Geist Mono",Consolas,monospace';
+  x.fillStyle = '#0a0e1a'; x.fillRect(0, 0, W, Hh);
+  const g = x.createRadialGradient(cx, 520, 40, cx, 520, 760); g.addColorStop(0, 'rgba(92,207,147,.28)'); g.addColorStop(1, 'rgba(92,207,147,0)');
+  x.fillStyle = g; x.fillRect(0, 0, W, Hh);
+  x.strokeStyle = '#26334f'; x.lineWidth = 4; rr(x, 50, 50, W - 100, Hh - 100, 48); x.stroke();
+  x.textAlign = 'center'; x.textBaseline = 'alphabetic';
+  x.fillStyle = '#e8edfa'; x.font = `800 84px ${sans}`; x.fillText('Dev', cx - 105, 220);
+  x.fillStyle = '#5ccf93'; x.fillText('Quest', cx + 120, 220);
+  x.fillStyle = '#8c98b8'; x.font = `500 38px ${sans}`; x.fillText('MEU PERFIL DE DEV', cx, 290);
+  x.font = `240px "Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif`; x.fillStyle = '#fff'; x.fillText(p.e, cx, 580);
+  x.fillStyle = '#e58fb8'; x.font = `800 88px ${sans}`; let y = wrap(x, p.t, cx, 720, W - 200, 100);
+  x.fillStyle = '#e3b44f'; x.font = `800 150px ${mono}`; x.fillText(m.total + ' pts', cx, y + 120);
+  if (m.nome) { x.fillStyle = '#e8edfa'; x.font = `600 56px ${sans}`; x.fillText(m.nome, cx, y + 195); }
+  x.fillStyle = '#8c98b8'; x.font = `500 46px ${sans}`; y = wrap(x, p.d, cx, y + 290, W - 220, 64);
+  x.font = `500 40px ${sans}`;                               // etiquetas, centralizadas em linhas
+  let row = [], rows = [], rw = 0;
+  p.tags.forEach(t => { const w = x.measureText('#' + t).width + 48; if (rw + w > W - 200 && row.length) { rows.push(row); row = []; rw = 0; } row.push([t, w]); rw += w + 16; });
+  if (row.length) rows.push(row);
+  y += 20;
+  rows.forEach(r => {
+    let sx = cx - (r.reduce((a, b) => a + b[1] + 16, 0) - 16) / 2;
+    r.forEach(([t, w]) => { x.fillStyle = 'rgba(90,174,224,.15)'; rr(x, sx, y, w, 72, 20); x.fill(); x.fillStyle = '#5aaee0'; x.textAlign = 'center'; x.fillText('#' + t, sx + w / 2, y + 50); sx += w + 16; });
+    y += 92;
+  });
+  x.fillStyle = '#5ccf93'; x.font = `700 46px ${sans}`; x.textAlign = 'center';
+  y = wrap(x, `${m.curso || ''}${m.inst ? ' · ' + m.inst : ''}`, cx, Hh - 250, W - 200, 60);
+  x.fillStyle = '#8c98b8'; x.font = `500 38px ${sans}`; wrap(x, m.contato || '', cx, y + 4, W - 200, 52);
+  return new Promise(res => c.toBlob(res, 'image/png'));
+}
+async function showCard(m) {
+  const ov = $('#ov'); ov.classList.remove('hidden'); ov.innerHTML = `<p class="center" style="margin:auto">Gerando seu cartão…</p>`;
+  let blob; try { blob = await makeCard(m); } catch {}
+  if (!blob) { ov.innerHTML = `<p class="center" style="margin:auto">Não deu para gerar o cartão neste celular.</p><button class="btn ghost" id="cl">Fechar</button>`; $('#cl').onclick = () => ov.classList.add('hidden'); return; }
+  const url = URL.createObjectURL(blob), file = new File([blob], 'meu-perfil-dev.png', { type: 'image/png' });
+  const canShare = !!(navigator.canShare && navigator.canShare({ files: [file] }));
+  ov.innerHTML = `<p class="hint">Segure a imagem para salvar, ou use os botões</p><img src="${url}" alt="Meu cartão de perfil de dev">
+    <div class="row">${canShare ? `<button class="btn sm" id="sh">Compartilhar</button>` : ''}<a class="btn sm ghost" id="dl" href="${url}" download="meu-perfil-dev.png" style="text-align:center;text-decoration:none">Baixar</a></div>
+    <button class="btn sm ghost" id="cl">Fechar</button>`;
+  $('#cl').onclick = () => { ov.classList.add('hidden'); URL.revokeObjectURL(url); };
+  if (canShare) $('#sh').onclick = () => navigator.share({ files: [file], title: 'Meu perfil de dev', text: `${m.profile.t}: ${m.total} pts no Dev Quest!` }).catch(() => {});
+}
+
+// mantem a tela do celular acesa durante o jogo
+(async function wake() { try { if (navigator.wakeLock) { await navigator.wakeLock.request('screen'); document.addEventListener('visibilitychange', () => { if (!document.hidden) wake(); }, { once: true }); } } catch {} })();
+connect();
+</script>
+</body>
+</html>

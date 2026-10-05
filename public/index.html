@@ -1,0 +1,982 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dev Quest - Engenharia de Software</title>
+<style>
+@font-face{font-family:"Geist";font-weight:100 900;font-display:swap;src:url(fonts/geist-latin-wght-normal.woff2) format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:"Geist";font-weight:100 900;font-display:swap;src:url(fonts/geist-latin-ext-wght-normal.woff2) format("woff2");unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:"Geist Mono";font-weight:100 900;font-display:swap;src:url(fonts/geist-mono-latin-wght-normal.woff2) format("woff2")}
+:root{
+  --bg:#0a0e1a; --panel:#121a2e; --line:#26334f; --text:#e8edfa; --mut:#8c98b8;
+  --green:#5ccf93; --blue:#5aaee0; --pink:#e58fb8; --yellow:#e3b44f; --red:#ee7a7a;
+  --mono:"Geist Mono","JetBrains Mono","Cascadia Code",Consolas,"Courier New",monospace;
+  --sans:"Geist","Segoe UI",system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--sans);overflow:hidden;user-select:none;-webkit-user-select:none}
+#rain{position:fixed;inset:0;width:100%;height:100%;opacity:.14}
+#confetti{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:8}
+.screen{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;padding:60px 24px 24px;overflow:auto}
+.screen.active{display:flex;animation:in .35s ease}
+@keyframes in{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.mono{font-family:var(--mono)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:28px;box-shadow:0 10px 30px rgba(0,0,0,.3)}
+h1{font-family:var(--sans);font-weight:700;letter-spacing:-.04em;font-size:clamp(2.4rem,7vw,5.2rem);line-height:1.05;text-align:center}
+h1 .g{color:var(--green)}
+h2{font-size:clamp(1.4rem,3.2vw,2.2rem);letter-spacing:-.01em}
+.sub{color:var(--mut);font-size:clamp(1rem,1.7vw,1.25rem);text-align:center;margin-top:12px;max-width:640px;line-height:1.45}
+.btn{font-family:var(--sans);font-weight:700;font-size:clamp(1.1rem,2.4vw,1.6rem);color:#04210f;background:var(--green);border:0;border-radius:12px;padding:16px 38px;cursor:pointer;transition:transform .12s,filter .2s}
+.btn:hover{filter:brightness(1.08)} .btn:active{transform:scale(.97)}
+.btn.ghost{background:transparent;color:var(--text);border:1px solid var(--line);font-size:1rem;padding:10px 20px;font-weight:500}
+.chips{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:18px 0}
+.chip{font-size:.95rem;padding:7px 14px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--text)}
+
+/* Início (modo atração) */
+.hero{width:min(1280px,100%);display:grid;grid-template-columns:1.1fr 1fr;gap:36px;align-items:center}
+.hero-l,.hero-r{display:flex;flex-direction:column;align-items:center}
+.call{font-size:clamp(1.3rem,2.6vw,2rem);font-weight:600;text-align:center;margin-top:14px;line-height:1.3}
+.call b{color:var(--green)}
+.demo{position:relative;width:min(560px,100%);height:112px;margin-top:20px;border:1px dashed var(--line);border-radius:14px;background:rgba(10,14,26,.7);overflow:hidden}
+.demo-score{position:absolute;right:12px;top:8px;font:700 1rem var(--mono);color:var(--yellow)}
+.dbug{position:absolute;font-size:2.6rem;transform:translate(-50%,-50%);animation:pop .22s ease-out}
+.dbug.dead{transition:transform .25s,opacity .25s;transform:translate(-50%,-50%) scale(1.8) rotate(25deg);opacity:0}
+.dbug.gone{transition:opacity .3s;opacity:0}
+.mini-rank{margin-top:22px;width:min(420px,100%);font-size:1.1rem}
+.mini-rank h3{font-size:1rem;color:var(--yellow);text-align:center;margin-bottom:8px;letter-spacing:.04em}
+.mini-rank .r{display:flex;justify-content:space-between;gap:16px;padding:8px 14px;border-radius:10px;background:rgba(18,26,46,.8);margin-top:6px;color:var(--text)}
+.mini-rank .r b{color:var(--yellow);font-family:var(--mono)}
+.mini-rank .none{color:var(--mut);text-align:center}
+#play{margin-top:22px}
+
+/* QR / controle no celular */
+.join{display:none;flex-direction:column;align-items:center;gap:16px;padding:20px 26px;border:1px solid var(--line);border-radius:16px;background:var(--panel);text-align:center}
+.join.on{display:flex}
+.qrbox{background:#fff;border-radius:12px;padding:10px;text-align:center}
+.qrbox img{display:block;border-radius:6px}
+.room{color:#0a0e1a;font-family:var(--mono);font-weight:700;letter-spacing:.3em;font-size:1.15rem;margin-top:4px}
+.how{max-width:360px}
+.how-t{font-size:1.25rem;font-weight:600;line-height:1.4}
+.how-s{margin-top:8px;font-size:.8rem;color:var(--mut);word-break:break-all}
+.join.connected{border-color:var(--green)}
+.join.connected .qrbox,.join.reserved .qrbox{opacity:.25;filter:grayscale(1)}
+.join.connected .how-t{color:var(--green)}
+.join.reserved{border-color:var(--yellow)} .join.reserved .how-t{color:var(--yellow)}
+#padwarn{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:9;font:700 1rem var(--sans);background:var(--red);color:#2a0606;padding:10px 18px;border-radius:10px;display:none}
+#padwarn.on{display:block}
+#soundhint{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:9;font:600 .95rem var(--sans);background:var(--panel);border:1px solid var(--line);color:var(--text);padding:8px 16px;border-radius:99px;display:none;cursor:pointer}
+#soundhint.on{display:block}
+#qbadge{position:fixed;top:12px;left:12px;z-index:9;font:600 .95rem var(--sans);background:var(--panel);border:1px solid var(--yellow);color:var(--yellow);padding:8px 14px;border-radius:99px;display:none}
+#qbadge.on{display:block}
+
+/* HUD */
+.hud{width:min(1100px,100%);display:flex;align-items:center;gap:18px;font-family:var(--sans);margin-bottom:14px}
+.hud .stage{color:var(--blue);font-weight:700}
+.hud .score{margin-left:auto;color:var(--yellow);font-family:var(--mono);font-size:1.4rem;font-weight:700}
+.hud .combo{color:var(--pink);font-weight:700;font-size:1.5rem;display:inline-block}
+.hud .combo.bump{animation:bump .3s ease-out}
+@keyframes bump{from{transform:scale(1.7)}to{transform:none}}
+.bar{flex:1;height:12px;border-radius:99px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;width:100%;background:var(--green);transition:width .08s linear,background .3s}
+
+/* Contagem regressiva */
+#cdL{color:var(--blue);font-weight:700;letter-spacing:.08em;font-size:clamp(1rem,2.4vw,1.6rem)}
+#cdN{font:800 clamp(9rem,28vw,20rem)/1 var(--mono);color:var(--green);animation:cnt .55s ease-out}
+@keyframes cnt{from{transform:scale(1.7);opacity:0}to{transform:none;opacity:1}}
+
+/* Fase 1 */
+.gridlines{position:absolute;inset:0;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);pointer-events:none}
+.gridlines i{border:1px dashed rgba(38,51,79,.7);display:flex;align-items:flex-start;justify-content:flex-start;padding:8px 12px;font:700 1rem var(--mono);color:rgba(140,152,184,.6);font-style:normal}
+#arena{position:relative;width:min(1100px,100%);flex:1;max-height:640px;min-height:340px;border:1px dashed var(--line);border-radius:16px;background:rgba(10,14,26,.7);overflow:hidden;cursor:crosshair}
+.target{position:absolute;font-size:clamp(3rem,7vw,5.4rem);background:none;border:0;cursor:pointer;transform:translate(-50%,-50%);animation:pop .22s ease-out}
+.target.bug{filter:drop-shadow(0 0 14px rgba(238,122,122,.85))}
+.target.feature{filter:drop-shadow(0 0 14px rgba(227,180,79,.85))}
+.target::after{content:attr(data-l);position:absolute;left:50%;top:100%;transform:translateX(-50%);font:700 .8rem var(--mono);letter-spacing:.08em;padding:2px 8px;border-radius:6px;background:rgba(10,14,26,.9)}
+.target.bug::after{color:var(--red)}
+.target.feature::after{color:var(--yellow)}
+.target.dead{transition:transform .25s,opacity .25s;transform:translate(-50%,-50%) scale(1.8) rotate(25deg);opacity:0;pointer-events:none}
+.target.gone{transition:opacity .3s;opacity:0;pointer-events:none}
+@keyframes pop{from{transform:translate(-50%,-50%) scale(.2)}to{transform:translate(-50%,-50%) scale(1)}}
+.float{position:absolute;font:800 1.6rem var(--mono);pointer-events:none;animation:up .8s forwards;transform:translateX(-50%);text-shadow:0 2px 8px rgba(0,0,0,.6)}
+@keyframes up{to{transform:translate(-50%,-60px);opacity:0}}
+.pt{position:absolute;width:10px;height:10px;border-radius:50%;pointer-events:none}
+#arena.flash{animation:flash .3s}
+@keyframes flash{50%{background:rgba(238,122,122,.25)}}
+#arena.shake{animation:shakeA .3s}
+@keyframes shakeA{20%{transform:translate(-8px,3px)}40%{transform:translate(7px,-4px)}60%{transform:translate(-5px,2px)}80%{transform:translate(3px,-1px)}}
+
+/* Fase 2 */
+.order{width:min(1100px,100%);display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-content:start}
+.step{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 10px;font:600 1.1rem var(--sans);color:var(--text);cursor:pointer;transition:transform .12s,border-color .2s;display:flex;flex-direction:column;align-items:center;gap:8px}
+.step span{font-size:2.2rem}
+.step:hover{transform:translateY(-3px);border-color:var(--blue)}
+.step.done{opacity:.15;pointer-events:none}
+.step.shake{animation:shake .35s;border-color:var(--red)}
+@keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.timeline{display:flex;flex-direction:column;gap:8px}
+.tcol{display:flex;flex-direction:column;gap:8px}
+.tcol h3{font-size:1rem;letter-spacing:.06em}
+.timeline.duel{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.order.duel{grid-template-columns:1fr}
+.order.duel .cards{display:none}
+.ohint{color:var(--mut);margin:-4px 0 12px;text-align:center}
+#ordTime{color:var(--blue);font-family:var(--mono)}
+.slot{min-height:58px;border:1px dashed var(--line);border-radius:12px;padding:8px 14px;display:flex;align-items:center;gap:12px;font-size:.95rem;color:var(--mut)}
+.slot .n{font-family:var(--mono);color:var(--mut);font-weight:700}
+.slot.ok{border:1px solid var(--green);background:rgba(92,207,147,.08);color:var(--text);animation:in .3s}
+.slot.ok .n{color:var(--green)}
+.slot b{display:block;color:var(--green)}
+
+/* Fase 3 */
+.quiz{width:min(900px,100%)}
+.dots{display:flex;gap:8px;justify-content:center;margin-bottom:18px}
+.dots i{width:42px;height:6px;border-radius:9px;background:var(--line)}
+.dots i.on{background:var(--pink)}
+.q{font-size:clamp(1.3rem,3vw,2rem);font-weight:700;text-align:center;margin-bottom:22px;letter-spacing:-.01em}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.opt{background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:22px 18px;font:500 1.15rem var(--sans);color:var(--text);cursor:pointer;text-align:left;transition:transform .12s,border-color .2s,background .2s}
+.opt:hover{transform:translateY(-3px);border-color:var(--pink);background:#1a2340}
+
+/* Painel / final */
+.panel{max-width:680px;text-align:center}
+.panel .ico{font-size:4.5rem;margin-bottom:8px}
+.panel p{color:var(--mut);font-size:1.25rem;line-height:1.55;margin:14px 0 26px}
+.panel p b{color:var(--text)}
+.final{width:min(1180px,100%);display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.final h3{font-family:var(--sans);font-weight:600;color:var(--blue);margin-bottom:12px;font-size:1.05rem}
+.big{font-family:var(--mono);font-size:3.2rem;color:var(--yellow);font-weight:800}
+.prof{display:flex;gap:16px;align-items:center;margin:14px 0}
+.prof .e{font-size:3.4rem}
+.prof h2{color:var(--pink)}
+.prof p{color:var(--mut);margin-top:4px}
+.tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.tags span{font:.85rem var(--sans);padding:5px 10px;border-radius:8px;background:rgba(90,174,224,.12);color:var(--blue)}
+ul.list{list-style:none;padding:0;display:grid;gap:10px}
+ul.list li{display:flex;gap:10px;line-height:1.4}
+ul.list li::before{content:"•";color:var(--green);font-weight:700}
+.contact{margin-top:18px;padding:14px;border-radius:12px;background:rgba(92,207,147,.1);color:var(--green);text-align:center;font-weight:700}
+.save{display:flex;gap:10px;margin-top:16px}
+.save input{flex:1;font:1.05rem var(--sans);padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--text);user-select:text}
+.save .btn{font-size:1rem;padding:12px 22px}
+.rank{margin-top:14px;font-size:.95rem;display:grid;gap:4px}
+.rank div{display:flex;justify-content:space-between;color:var(--mut)}
+.rank div.row:nth-of-type(2){color:var(--yellow)}
+.rank .me{color:var(--green)!important}
+.rank .rtabs{justify-content:flex-start;align-items:center;gap:8px}
+.rank .rtabs h3{margin:0 auto 0 0}
+.rank .tab{font:600 .8rem var(--sans);background:transparent;color:var(--mut);border:1px solid var(--line);border-radius:99px;padding:4px 12px;cursor:pointer}
+.rank .tab.on{color:var(--text);border-color:var(--blue);background:rgba(90,174,224,.12)}
+
+.tools{position:fixed;top:12px;right:12px;display:flex;gap:8px;z-index:9}
+@media(max-width:980px){.hero{grid-template-columns:1fr}}
+@media(max-width:820px){.order,.final,.opts{grid-template-columns:1fr}.cards{grid-template-columns:1fr 1fr}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important}}
+/* modo, dificuldade */
+.diff{display:flex;gap:8px;align-items:center;justify-content:center;margin-top:6px;color:var(--mut);font-size:.95rem}
+.diff button{font:600 .95rem var(--sans);color:var(--mut);background:transparent;border:1px solid var(--line);border-radius:99px;padding:6px 14px;cursor:pointer}
+.diff button.on{color:var(--text);border-color:var(--blue);background:rgba(90,174,224,.14)}
+.modes{display:none;gap:10px;margin-top:16px;justify-content:center}
+.modes.on{display:flex}
+.btn.pink{background:var(--pink);color:#2a0618}
+.hud .score.s1{color:var(--blue)} .hud .score.s2{margin-left:0;color:var(--pink)}
+.target.quick{filter:drop-shadow(0 0 14px rgba(90,174,224,.9))}
+.target.quick::after{color:var(--blue)}
+
+#qWho{text-align:center;color:var(--mut);margin-top:14px;font-size:1rem}
+
+/* Resultado do duelo */
+.duelwrap{width:min(1100px,100%);display:grid;gap:16px}
+.dwin{font-size:clamp(1.8rem,4vw,3rem);font-weight:800;text-align:center;color:var(--yellow);letter-spacing:-.02em}
+.dcards{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.dcard{text-align:center;display:grid;gap:6px;justify-items:center}
+.dcard h3{font-size:1rem;letter-spacing:.1em}
+.dcard.c0 h3{color:var(--blue)} .dcard.c1 h3{color:var(--pink)}
+.dcard.win{border-color:var(--yellow);box-shadow:0 0 0 2px rgba(227,180,79,.35),0 10px 30px rgba(0,0,0,.3)}
+.dcard .e{font-size:3.6rem}
+.dcard h2{color:var(--pink)}
+.dname{font-weight:600;color:var(--text);min-height:1.4em}
+.brk{color:var(--mut);font:.9rem var(--mono)}
+.dinfo{display:grid;gap:10px}
+.dinfo h3{color:var(--blue);font-size:1.05rem}
+@media(max-width:820px){.dcards{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<canvas id="rain"></canvas>
+<canvas id="confetti"></canvas>
+<div id="padwarn">📱 Controle desconectado. Reabra a página no celular.</div>
+<div id="soundhint">🔈 Clique em qualquer lugar para ativar o som</div>
+<div id="qbadge"></div>
+<div class="tools">
+  <button class="btn ghost" id="mute" title="Som (M)">🔊</button>
+  <button class="btn ghost" id="full" title="Tela cheia (F)">⛶</button>
+</div>
+
+<!-- Início (modo atração) -->
+<section class="screen active" id="start">
+  <div class="hero">
+    <div class="hero-l">
+      <h1>Dev <span class="g">Quest</span></h1>
+      <p class="call">Quem leva jeito para programar?<br><b>Escaneie e jogue!</b></p>
+      <p class="sub" id="tagline"></p>
+      <div class="demo" id="demo" aria-hidden="true"><div class="demo-score" id="demoScore">+0</div></div>
+      <div class="chips"><span class="chip">🐞 3 mini-games</span><span class="chip">⚔ modo duelo</span><span class="chip">⏱ ~2 minutos</span><span class="chip">🧬 descubra seu perfil de dev</span></div>
+      <div class="diff" id="diff"><span>Dificuldade:</span><button data-d="normal" class="on">Normal</button><button data-d="hard">Difícil 🔥</button></div>
+      <div class="modes" id="modes"><button class="btn ghost" id="mSolo">👤 1 jogador</button><button class="btn ghost" id="mDuel">⚔ Duelo (2 jogadores)</button></div>
+      <button class="btn" id="play">▶ JOGAR</button>
+    </div>
+    <div class="hero-r">
+      <div class="join" id="join">
+        <div class="qrbox" id="qrbox">
+          <img id="qr" alt="QR code para abrir o controle no celular" width="240" height="240">
+          <div class="room mono" id="roomCode"></div>
+        </div>
+        <div class="how">
+          <div class="how-t" id="howT">📱 Aponte a câmera do celular para o QR code e use-o como controle!</div>
+          <div class="how-s mono" id="howS"></div>
+        </div>
+      </div>
+      <div class="mini-rank" id="miniRank"></div>
+    </div>
+  </div>
+</section>
+
+<!-- Painel genérico (instruções / curiosidades) -->
+<section class="screen" id="panelScr">
+  <div class="card panel">
+    <div class="ico" id="pIco"></div>
+    <h2 id="pTitle"></h2>
+    <p id="pText"></p>
+    <button class="btn" id="pBtn">Bora!</button>
+  </div>
+</section>
+
+<!-- Contagem regressiva -->
+<section class="screen" id="countScr">
+  <div id="cdL"></div>
+  <div id="cdN"></div>
+</section>
+
+<!-- Fase 1 -->
+<section class="screen" id="bugs">
+  <div class="hud"><span class="stage">FASE 1 · CAÇA AOS BUGS</span><div class="bar"><i id="bugBar"></i></div><span class="combo" id="combo"></span><span class="score" id="bugScore">0</span><span class="score s2" id="bugScore2"></span></div>
+  <div id="arena"></div>
+</section>
+
+<!-- Fase 2 -->
+<section class="screen" id="order">
+  <div class="hud"><span class="stage">FASE 2 · CICLO DE VIDA</span><div class="bar"><i id="ordBar"></i></div><span class="combo" id="ordTime"></span><span class="score" id="ordScore"></span></div>
+  <div class="ohint" id="ordHint"></div>
+  <div class="order">
+    <div class="cards" id="cards"></div>
+    <div class="timeline" id="timeline"></div>
+  </div>
+</section>
+
+<!-- Fase 3 -->
+<section class="screen" id="quiz">
+  <div class="card quiz">
+    <div class="dots" id="dots"></div>
+    <div class="q" id="qText"></div>
+    <div class="opts" id="qOpts"></div>
+    <div id="qWho"></div>
+  </div>
+</section>
+
+<!-- Resultado (1 jogador) -->
+<section class="screen" id="final">
+  <div class="final">
+    <div class="card">
+      <h3>Resultado</h3>
+      <div class="big" id="total"></div>
+      <div class="prof"><div class="e" id="pfE"></div><div><h2 id="pfT"></h2><p id="pfD"></p></div></div>
+      <h3>Áreas para você explorar</h3>
+      <div class="tags" id="pfTags"></div>
+      <div class="save"><input id="nameIn" maxlength="14" placeholder="Seu nome ou apelido" autocomplete="off"><button class="btn" id="saveBtn">Salvar</button></div>
+      <div class="rank" id="rank"></div>
+    </div>
+    <div class="card">
+      <h3 id="cTitle"></h3>
+      <ul class="list" id="cList"></ul>
+      <div class="contact" id="cContact"></div>
+      <div style="text-align:center;margin-top:18px"><button class="btn ghost" id="again">↻ Jogar de novo</button></div>
+    </div>
+  </div>
+</section>
+
+<!-- Resultado (duelo) -->
+<section class="screen" id="finalDuel">
+  <div class="duelwrap">
+    <div class="dwin" id="dWin"></div>
+    <div class="dcards">
+      <div class="card dcard c0" id="dc0"><h3>JOGADOR 1</h3><div class="dname" id="dn0"></div><div class="e" id="de0"></div><h2 id="dt0"></h2><div class="big" id="dp0"></div><div class="brk" id="db0"></div></div>
+      <div class="card dcard c1" id="dc1"><h3>JOGADOR 2</h3><div class="dname" id="dn1"></div><div class="e" id="de1"></div><h2 id="dt1"></h2><div class="big" id="dp1"></div><div class="brk" id="db1"></div></div>
+    </div>
+    <div class="card dinfo">
+      <h3 id="dCurso"></h3>
+      <ul class="list" id="dList"></ul>
+      <div class="contact" id="dContact"></div>
+      <div style="text-align:center"><button class="btn ghost" id="dAgain">↻ Jogar de novo</button></div>
+    </div>
+  </div>
+</section>
+
+<script>
+/* =====================================================================
+   CONFIGURE AQUI: textos do curso e da instituição
+   ===================================================================== */
+const CONFIG = {
+  curso: "Engenharia de Software",
+  instituicao: "UniSENAI São José dos Pinhais",
+  frase: "Quem faz o app do seu banco, o jogo do seu celular e a IA que responde suas dúvidas? Engenheiros de software. Quer testar?",
+  destaques: [
+    "<b>Duração:</b> 4 anos (8 semestres)",
+    "<b>Você aprende:</b> programação, banco de dados, arquitetura de sistemas, testes, segurança, inteligência artificial e gestão de projetos",
+    "<b>Na prática:</b> projetos reais em equipe desde os primeiros semestres",
+    "<b>Mercado:</b> uma das áreas com mais vagas, com trabalho presencial, híbrido ou remoto",
+    "<b>Onde atuar:</b> startups, bancos, games, saúde, indústria, governo ou abrindo o seu próprio negócio",
+    "<b>Não precisa ser gênio em matemática:</b> precisa de curiosidade e gosto por resolver problemas"
+  ],
+  contato: "Fale com a equipe do curso aqui no estande",
+  link: "" // opcional: se preencher (https://...), o celular ganha o botão "Conhecer o curso"
+};
+/* ===================================================================== */
+if (/NOME DA SUA|seuperfil|X semestres/.test(JSON.stringify(CONFIG))) console.warn('Dev Quest: ainda há textos de exemplo no CONFIG (instituição, duração, contato).');
+
+const $ = s => document.querySelector(s);
+const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- som: efeitos e trilha (WebAudio, sem arquivos) ---------- */
+let muted=false, ac, mg, music;
+function audio(){
+  try{
+    if(!ac){
+      ac = new (window.AudioContext||window.webkitAudioContext)();
+      mg = ac.createGain(); mg.connect(ac.destination);
+      music = ac.createGain(); music.gain.value=.8; music.connect(mg);
+    }
+    if(ac.state==='suspended') ac.resume();
+    return ac;
+  }catch(e){ return null }
+}
+function tone(f,t,d,type='square',v=.04,dest){
+  const o=ac.createOscillator(), g=ac.createGain();
+  o.type=type; o.frequency.setValueAtTime(f,t); g.gain.setValueAtTime(v,t); g.gain.exponentialRampToValueAtTime(.0001,t+d);
+  o.connect(g); g.connect(dest||mg); o.start(t); o.stop(t+d+.02);
+}
+function beep(f=600,d=.08,type='square',v=.04,delay=0){ if(muted||!audio()) return; tone(f,ac.currentTime+delay,d,type,v); }
+function noise(d=.07,v=.05){
+  if(muted||!audio()) return;
+  const n=ac.sampleRate*d|0, buf=ac.createBuffer(1,n,ac.sampleRate), da=buf.getChannelData(0);
+  for(let i=0;i<n;i++) da[i]=(Math.random()*2-1)*(1-i/n);
+  const s=ac.createBufferSource(), g=ac.createGain(); s.buffer=buf; g.gain.value=v; s.connect(g); g.connect(mg); s.start();
+}
+const sfx = {
+  good:(c=0)=>{ noise(.05,.035); beep(640+Math.min(c,8)*45,.06); beep(980+Math.min(c,8)*45,.09,'square',.04,.06) },
+  bad:()=>{ beep(180,.28,'sawtooth',.06); beep(120,.3,'sawtooth',.05,.08) },
+  tick:()=>beep(520,.05),
+  count:()=>beep(440,.14,'square',.05),
+  go:()=>{ beep(880,.35,'square',.06); beep(1320,.35,'triangle',.05,.05) },
+  warn:()=>beep(300,.06,'square',.03),
+  win:()=>[523,659,784,1046,1318].forEach((f,i)=>beep(f,.18,'triangle',.07,i*.11))
+};
+// trilha em loop: baixo + arpejo (calma nos menus, rápida nas fases de ação)
+const MUS={mode:'chill',step:0,next:0};
+const BASS=[45,45,41,43], ARP=[[57,60,64,67],[57,60,64,67],[53,57,60,64],[55,59,62,67]];
+const mf=n=>440*Math.pow(2,(n-69)/12);
+setInterval(()=>{
+  if(muted||!ac||ac.state!=='running'){ MUS.next=0; return; }
+  const act=MUS.mode==='action', dur=60/(act?136:92)/2;
+  if(!MUS.next||MUS.next<ac.currentTime) MUS.next=ac.currentTime+.05;
+  while(MUS.next<ac.currentTime+.3){
+    const s=MUS.step%32, bar=s>>3, i=s&7, t=MUS.next;
+    if(i===0||i===4||(act&&(i===2||i===6))) tone(mf(BASS[bar]),t,dur*1.6,'triangle',.05,music);
+    if(act||i%2===0) tone(mf(ARP[bar][act?i&3:i>>1]+(act&&i===7?12:0)),t,dur*.8,act?'square':'triangle',act?.012:.016,music);
+    MUS.step++; MUS.next+=dur;
+  }
+},100);
+// o navegador só libera o som depois de um clique: avisa o operador
+audio();
+['pointerdown','keydown'].forEach(ev=>addEventListener(ev,audio,{passive:true}));
+setInterval(()=>$('#soundhint').classList.toggle('on', !muted && !!ac && ac.state!=='running'),800);
+
+/* ---------- utilidades ---------- */
+let H = {}; // ações que o controle (celular) pode disparar na tela atual: H[acao](valor, jogador)
+const MODE = { bugs:'action', order:'action' };
+function show(id){
+  H = {};
+  document.querySelectorAll('.screen').forEach(e=>e.classList.remove('active'));
+  $('#'+id).classList.add('active');
+  MUS.mode = MODE[id] || 'chill';
+  syncDemo();
+}
+const shuffle = a => { a=[...a]; for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]} return a };
+const rand = (a,b) => a + Math.random()*(b-a);
+
+/* ---------- dificuldade ---------- */
+const DIFFS = {
+  normal:{ dur:25000, sp0:750, spMin:300, ramp:.025, life0:2000, lifeMin:1000, lifeRamp:.04, feat:.25, quick:.12 },
+  hard:  { dur:30000, sp0:600, spMin:230, ramp:.03,  life0:1600, lifeMin:800,  lifeRamp:.04, feat:.35, quick:.2 }
+};
+const newP = () => ({ bugs:0, kills:0, order:0, quiz:0, votes:{}, lastKey:null, key:null, total:0, name:'', saved:false });
+const S = { diff:'normal', n:1, p:[newP(),newP()], t0:0 };
+const totalOf = p => p.bugs + p.order + p.quiz;
+const PCOL = ['var(--blue)','var(--pink)'];
+
+/* ---------- ligação com o celular (WebSocket) ---------- */
+const NET = { ws:null, code:null, url:null, pads:[false,false], padSeen:false, vw:[null,null], used:false, mode:'solo', q:{n:0,next:null,calling:null} };
+const anyPad = () => NET.pads[0] || NET.pads[1];
+const startActive = () => $('#start').classList.contains('active');
+function netSend(o){ if(NET.ws && NET.ws.readyState===1) NET.ws.send(JSON.stringify(o)); }
+// o que o celular deve mostrar agora; slot 0/1 = só aquele jogador, sem slot = todos
+function push(view, slot){
+  if(slot===0||slot===1){ NET.vw[slot]=view; netSend({t:'view',to:slot,...view}); }
+  else { NET.vw[0]=NET.vw[1]=view; netSend({t:'view',...view}); }
+}
+const pushAll = fn => { for(let i=0;i<S.n;i++) push(fn(i),i); };
+function newRoom(){ NET.vw=[null,null]; NET.pads=[false,false]; NET.padSeen=false; NET.used=false; NET.mode='solo'; $('#padwarn').classList.remove('on'); netSend({t:'new-room'}); }
+
+function menuView(){
+  return NET.mode==='duel'
+    ? { screen:'hold', ico:'⚔', title:'Duelo!', text:'Aguardando o Jogador 2 escanear o QR code na tela grande…', cancel:'Cancelar duelo' }
+    : { screen:'menu', diff:S.diff };
+}
+function pushMenu(){ if(NET.pads[0]) push(menuView(),0); }
+function syncDiffUI(){ document.querySelectorAll('#diff button').forEach(b=>b.classList.toggle('on', b.dataset.d===S.diff)); }
+function setDiff(v){ S.diff = v==='hard' ? 'hard' : 'normal'; syncDiffUI(); if(startActive()) pushMenu(); }
+function chooseMode(m){
+  if(m==='duel'){
+    NET.mode='duel'; netSend({t:'mode',max:2}); renderJoin(); pushMenu();
+    if(NET.pads[1]) startGame(2);
+  } else startGame(1);
+}
+function cancelDuel(){ NET.mode='solo'; netSend({t:'mode',max:1}); renderJoin(); pushMenu(); }
+function onPadJoin(sl){                                  // alguém entrou com a tela inicial aberta
+  if(!startActive()) return;
+  if(sl===1 && NET.mode==='duel') startGame(2);
+  else if(sl===0) pushMenu();
+}
+
+function renderQueue(){
+  const q=NET.q, b=$('#qbadge'), j=$('#join'), pc=NET.pads.filter(Boolean).length;
+  b.classList.toggle('on', q.n>0 || !!q.calling);
+  b.textContent = '👥 Fila: '+q.n+(q.calling?' · chamando '+q.calling : q.next?' · próximo: '+q.next : '');
+  j.classList.toggle('reserved', !!q.calling && pc<(NET.mode==='duel'?2:1));
+  if(!NET.code) return;
+  if(q.calling && pc<(NET.mode==='duel'?2:1)){ $('#howT').textContent='📲 Vez de '+q.calling+'! Aguardando o celular entrar…'; $('#howS').textContent = q.n>0 ? 'Na fila: '+q.n : ''; }
+}
+function renderJoin(){
+  const j=$('#join'), p=$('#play'), duel=NET.mode==='duel', pc=NET.pads.filter(Boolean).length, full=pc>=(duel?2:1);
+  syncDiffUI();
+  if(!NET.code){ j.classList.remove('on'); $('#modes').classList.remove('on'); p.className='btn'; p.textContent='▶ JOGAR'; syncDemo(); return; } // sem servidor: modo toque/mouse na própria tela
+  j.classList.add('on'); j.classList.toggle('connected',full);
+  p.className='btn ghost'; p.textContent='Jogar nesta tela (toque/mouse)';
+  $('#qr').src='/qr.svg?u='+encodeURIComponent(NET.url);
+  $('#roomCode').textContent=NET.code;
+  $('#howT').textContent = duel && !full ? '⚔ Duelo! Jogador 2: aponte a câmera para o QR code e entre!'
+    : full ? '✅ Controle conectado! Escolha no celular: 1 jogador ou duelo.'
+    : '📱 Aponte a câmera do celular para o QR code e use-o como controle!';
+  $('#howS').textContent = full ? '' : 'ou abra '+NET.url;
+  $('#modes').classList.toggle('on', !!NET.pads[0]);
+  $('#mDuel').style.display = duel ? 'none' : '';
+  $('#mSolo').textContent = duel && !full ? '↩ Cancelar duelo' : '👤 1 jogador';
+  renderQueue(); syncDemo();
+}
+function connectNet(){
+  if(location.protocol==='file:') return;               // aberto direto do arquivo: só modo local
+  const ws=new WebSocket(`${location.protocol==='https:'?'wss':'ws'}://${location.host}/ws?role=host`);
+  NET.ws=ws;
+  ws.onmessage=e=>{
+    const m=JSON.parse(e.data);
+    if(m.t==='room'){ NET.code=m.code; NET.url=m.url; renderJoin(); }
+    else if(m.t==='pad'){
+      const sl=m.slot||0; NET.pads[sl]=m.online;
+      if(m.online){
+        NET.padSeen=true; $('#padwarn').classList.remove('on');
+        if(NET.vw[sl]) netSend({t:'view',to:sl,...NET.vw[sl]});
+        sfx.good(); onPadJoin(sl);
+      } else if(NET.padSeen && !startActive()){
+        $('#padwarn').textContent = S.n>1 ? `📱 Controle do Jogador ${sl+1} desconectado. Reabra a página no celular.` : '📱 Controle desconectado. Reabra a página no celular.';
+        $('#padwarn').classList.add('on');
+      }
+      renderJoin();
+    }
+    else if(m.t==='ranking'){                                 // o servidor e a fonte do ranking (também zera quando o organizador usa o painel)
+      try{ localStorage.setItem(RK,JSON.stringify(m.list||[])) }catch(e){}
+      if(startActive()) renderMiniRank();
+    }
+    else if(m.t==='queue'){ NET.q={n:m.n||0,next:m.next||null,calling:m.calling||null}; renderQueue(); }
+    else if(m.t==='in'){ resetIdle(); const f=H[m.k]; if(f) f(m.v, m.p||0); }
+  };
+  ws.onclose=()=>{ NET.ws=null; NET.code=null; NET.pads=[false,false]; NET.mode='solo'; NET.q={n:0,next:null,calling:null}; renderQueue(); renderJoin(); setTimeout(connectNet,2500); };
+}
+
+/* painel genérico. No duelo, os dois jogadores tocam "Pronto" para seguir; se alguém não tocar, segue sozinho após 20s */
+let panelT=0;
+function panel({ico,title,text,btn='Bora!',onClick}){
+  clearTimeout(panelT);
+  $('#pIco').textContent=ico; $('#pTitle').textContent=title; $('#pText').innerHTML=text; $('#pBtn').textContent=btn;
+  let fired=false;
+  const go = ()=>{ if(fired) return; fired=true; clearTimeout(panelT); sfx.tick(); onClick() };
+  $('#pBtn').onclick = go;
+  show('panelScr');
+  const plain=text.replace(/<br\s*\/?>/g,' ').replace(/<[^>]+>/g,'');
+  const view=wait=>({screen:'panel',ico,title,text:plain,btn,wait});
+  if(S.n<2 || !NET.ws){ H.btn=go; push(view(false)); }
+  else {
+    const ready=new Set();
+    H.btn=(v,slot)=>{ ready.add(slot); if(ready.size>=S.n) go(); else push(view(true),slot); };
+    push(view(false)); panelT=setTimeout(go,20000);
+  }
+}
+
+/* ---------- contagem regressiva antes de cada fase ---------- */
+let cdT=0;
+function countdown(label, done){
+  clearTimeout(cdT); show('countScr');
+  const seq=['3','2','1','JÁ!']; let i=0;
+  const step=()=>{
+    const n=seq[i++], el=$('#cdN');
+    $('#cdL').textContent=label; el.textContent=n; el.style.animation='none'; void el.offsetWidth; el.style.animation='';
+    push({screen:'count',n,label});
+    n==='JÁ!' ? sfx.go() : sfx.count();
+    cdT = i<seq.length ? setTimeout(step,650) : setTimeout(done,450);
+  };
+  step();
+}
+
+/* ---------- ranking (salvo no navegador deste notebook) ---------- */
+const RK='devquest_rank_v1';
+const today = () => { const d=new Date(), p=n=>String(n).padStart(2,'0'); return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()) };
+const loadRank = () => { try{return JSON.parse(localStorage.getItem(RK))||[]}catch(e){return []} };
+const rankList = scope => loadRank().filter(x => scope==='geral' || x.d===today());
+function saveRank(n,s,p){
+  const r=loadRank(), d=today(); r.push({n,s,p,d}); r.sort((a,b)=>b.s-a.s);
+  netSend({t:'rank-add',n,s,p,d});                      // copia no servidor: o painel do organizador mostra o mesmo ranking
+  try{localStorage.setItem(RK,JSON.stringify(r.slice(0,100)))}catch(e){}
+}
+function renderMiniRank(){
+  const r=rankList('dia').slice(0,5), el=$('#miniRank'), medal=['🥇','🥈','🥉','4º','5º'];
+  el.innerHTML = '<h3>🏆 RANKING DE HOJE</h3>' + (r.length ? r.map((x,i)=>`<div class="r"><span>${medal[i]} <span class="nm"></span></span><b>${x.s}</b></div>`).join('') : '<div class="none">Seja o primeiro no ranking! 🏆</div>');
+  el.querySelectorAll('.nm').forEach((b,i)=>b.textContent=r[i].n);
+}
+
+/* ---------- início + modo atração ---------- */
+let demoT=null;
+function stopDemo(){ clearInterval(demoT); demoT=null; $('#demo').querySelectorAll('.dbug').forEach(e=>e.remove()); }
+function startDemo(){
+  if(demoT||RM) return;
+  const d=$('#demo'), sc=$('#demoScore'); let pts=0;
+  const spawn=()=>{
+    const feat=Math.random()<.2, el=document.createElement('span');
+    el.className='dbug'; el.textContent=feat?'💡':'🐞'; el.style.left=rand(8,92)+'%'; el.style.top=rand(30,72)+'%'; d.appendChild(el);
+    setTimeout(()=>{
+      if(!el.isConnected) return;
+      if(feat) el.classList.add('gone'); else { el.classList.add('dead'); pts=(pts+10)%300; sc.textContent='+'+pts; }
+      setTimeout(()=>el.remove(),320);
+    },650);
+  };
+  spawn(); demoT=setInterval(spawn,540);
+}
+function syncDemo(){ (startActive() && !anyPad()) ? startDemo() : stopDemo(); }
+
+function goStart(){
+  clearTimers();
+  if(NET.used || anyPad()) newRoom();                  // próxima pessoa = novo QR code e sessão nova
+  NET.mode='solo'; S.n=1;
+  renderMiniRank(); $('#tagline').textContent=CONFIG.frase; show('start'); renderJoin();
+  H.mode = (v,slot)=>{ if(slot===0) chooseMode(v==='duel'?'duel':'solo') };   // menu do celular
+  H.diff = v=>setDiff(v);
+  H.cancel = ()=>cancelDuel();
+}
+$('#play').onclick = ()=>startGame(1);
+$('#mSolo').onclick = ()=>{ (NET.mode==='duel' && NET.pads.filter(Boolean).length<2) ? cancelDuel() : startGame(1) };
+$('#mDuel').onclick = ()=>chooseMode('duel');
+document.querySelectorAll('#diff button').forEach(b=>b.onclick=()=>setDiff(b.dataset.d));
+
+function startGame(n){
+  if(n===1 && NET.mode==='duel'){ NET.mode='solo'; netSend({t:'mode',max:1}); }
+  sfx.tick(); NET.used=true; S.n=n; S.p=[newP(),newP()]; S.t0=performance.now();
+  const dur=DIFFS[S.diff].dur/1000;
+  panel(n>1
+    ? { ico:'⚔', title:'Duelo! Fase 1: Caça aos Bugs',
+        text:'Os dois jogam na <b>mesma tela</b>: quem tocar primeiro no 🐞 ou no 🦟 leva os pontos! Cada celular tem 9 botões que espelham os 9 quadrantes.<br>Cuidado: <b>💡 features</b> tiram pontos de quem tocar.',
+        btn:`Pronto! (${dur}s)`, onClick:()=>countdown('DUELO · FASE 1 · CAÇA AOS BUGS',startBugs) }
+    : { ico:'🐞', title:'Fase 1: Caça aos Bugs',
+        text:'Bugs são erros no código. Toque nos <b>🐞 bugs</b> para esmagá-los antes que sumam! O <b>🦟 bug veloz</b> vale mais, mas some rápido. No celular, os 9 botões espelham os 9 quadrantes da tela.<br>Cuidado: <b>💡 features</b> são funcionalidades de propósito. Não toque nelas!',
+        btn:`Começar (${dur}s)`, onClick:()=>countdown('FASE 1 · CAÇA AOS BUGS',startBugs) });
+}
+
+/* ---------- Fase 1: bugs ---------- */
+let bugTimers=[];
+function clearTimers(){ bugTimers.forEach(t=>{clearInterval(t);clearTimeout(t)}); bugTimers=[]; clearTimeout(cdT); clearTimeout(panelT); }
+const KIND = { b:{e:'🐞',l:'BUG',cls:'bug'}, f:{e:'💡',l:'FEATURE',cls:'feature'}, q:{e:'🦟',l:'RÁPIDO',cls:'quick'} };
+function startBugs(){
+  show('bugs');
+  const n=S.n, cfg=DIFFS[S.diff], arena=$('#arena'), DUR=cfg.dur, t0=performance.now();
+  const score=[0,0], combo=[0,0], kills=[0,0]; let alive=true, lastSec=99;
+  const cells=new Array(9).fill(null); // alvo ativo em cada quadrante: { hit, kind } (os celulares espelham estes 9 quadrantes)
+  arena.innerHTML='<div class="gridlines">'+[1,2,3,4,5,6,7,8,9].map(k=>`<i>${k}</i>`).join('')+'</div>';
+  $('#combo').textContent=''; $('#bugScore2').style.display = n>1 ? '' : 'none';
+  $('#bugScore').classList.toggle('s1', n>1);
+
+  const float=(x,y,txt,color,big=1)=>{
+    const f=document.createElement('div'); f.className='float'; f.textContent=txt; f.style.cssText=`left:${x}%;top:${y}%;color:${color};font-size:${1.6*big}rem`;
+    arena.appendChild(f); setTimeout(()=>f.remove(),800);
+  };
+  const burst=(x,y,color)=>{                           // partículas ao esmagar
+    if(RM) return;
+    for(let i=0;i<9;i++){
+      const p=document.createElement('i'); p.className='pt'; p.style.cssText=`left:${x}%;top:${y}%;background:${color}`; arena.appendChild(p);
+      const a=Math.random()*6.283, d=rand(45,120);
+      p.animate([{transform:'translate(-50%,-50%) scale(1)',opacity:1},{transform:`translate(calc(-50% + ${Math.cos(a)*d}px),calc(-50% + ${Math.sin(a)*d}px)) scale(.2)`,opacity:0}],{duration:520,easing:'cubic-bezier(.2,.7,.3,1)'}).onfinish=()=>p.remove();
+    }
+  };
+  const sync=(slot,fx)=>{
+    const cb=$('#combo');
+    if(n===1){
+      $('#bugScore').textContent=score[0];
+      const had=cb.textContent; cb.textContent=combo[0]>=3?`🔥 combo x${combo[0]}`:'';
+      if(combo[0]>=3 && cb.textContent!==had){ cb.classList.remove('bump'); void cb.offsetWidth; cb.classList.add('bump'); }
+    } else { $('#bugScore').textContent='J1 '+score[0]; $('#bugScore2').textContent='J2 '+score[1]; cb.textContent=''; }
+    const cv=cells.map(c=>c?c.kind:null);
+    for(let i=0;i<n;i++) push({screen:'bugs',score:score[i],opp:n>1?score[1-i]:null,cells:cv,fx:i===slot?fx:undefined},i);
+  };
+  sync();
+
+  function spawn(){
+    if(!alive) return;
+    const el_t=performance.now()-t0, free=cells.map((c,i)=>c?-1:i).filter(i=>i>=0);
+    bugTimers.push(setTimeout(spawn, Math.max(cfg.spMin, cfg.sp0 - el_t*cfg.ramp)*(n>1?.8:1)));   // no duelo a tela fica mais cheia
+    if(!free.length) return;
+    const c=free[Math.random()*free.length|0], el=document.createElement('button');
+    const kind = Math.random()<cfg.feat ? 'f' : Math.random()<cfg.quick ? 'q' : 'b', K=KIND[kind];
+    const x=(c%3+.5)*33.33+rand(-6,6), y=((c/3|0)+.5)*33.33+rand(-6,6);
+    el.className='target '+K.cls; el.textContent=K.e; el.dataset.l=K.l;
+    el.setAttribute('aria-label',kind==='f'?'feature':'bug'); el.style.left=x+'%'; el.style.top=y+'%';
+    arena.appendChild(el);
+    let done=false;
+    const hit=pl=>{                                   // chamado por toque/mouse na tela OU pelo celular; no duelo, quem tocar primeiro leva
+      if(done||!alive) return; done=true; cells[c]=null;
+      if(kind==='f'){
+        score[pl]=Math.max(0,score[pl]-15); combo[pl]=0; float(x,y,'-15','var(--red)'); burst(x,y,'#ee7a7a'); sfx.bad();
+        arena.classList.remove('flash','shake'); void arena.offsetWidth; arena.classList.add('flash','shake'); sync(pl,'bad');
+      } else {
+        combo[pl]++; kills[pl]++; const pts=(kind==='q'?25:10)+Math.min(combo[pl],6)*2; score[pl]+=pts;
+        float(x,y,(n>1?'J'+(pl+1)+' ':'')+'+'+pts, n>1?PCOL[pl]:'var(--green)', 1+Math.min(combo[pl],8)*.08); burst(x,y,n>1?(pl?'#e58fb8':'#5aaee0'):'#5ccf93'); sfx.good(combo[pl]); sync(pl,'good');
+      }
+      el.classList.add('dead'); setTimeout(()=>el.remove(),260);
+    };
+    cells[c]={hit,kind};
+    sync();
+    el.addEventListener('pointerdown',e=>{ e.stopPropagation(); if(n===1) hit(0); });
+    const life=Math.max(cfg.lifeMin, cfg.life0 - el_t*cfg.lifeRamp)*(kind==='q'?.55:1);
+    bugTimers.push(setTimeout(()=>{ if(done) return; done=true; cells[c]=null; if(kind!=='f') combo[0]=combo[1]=0; sync(); el.classList.add('gone'); setTimeout(()=>el.remove(),300) },life));
+  }
+  H.cell = (i,slot) => cells[i] && cells[i].hit(Math.min(slot|0,n-1));
+  spawn();
+  const tick=setInterval(()=>{
+    const left=DUR-(performance.now()-t0), pct=Math.max(0,left/DUR*100), bar=$('#bugBar');
+    bar.style.width=pct+'%'; bar.style.background = pct>50?'var(--green)':pct>20?'var(--yellow)':'var(--red)';
+    const sec=Math.ceil(left/1000); if(sec<=5 && sec>0 && sec!==lastSec){ lastSec=sec; sfx.warn(); } // tique nos últimos 5s
+    if(left<=0){
+      alive=false; clearTimers();
+      for(let i=0;i<n;i++){ S.p[i].bugs=score[i]; S.p[i].kills=kills[i]; }
+      panel({ico:'🧪',title: n>1 ? 'Fim da caça aos bugs!' : `Você esmagou ${kills[0]} bugs!`,
+        text: n>1
+          ? `<b>Jogador 1:</b> ${kills[0]} bugs · ${score[0]} pts<br><b>Jogador 2:</b> ${kills[1]} bugs · ${score[1]} pts<br><br>Engenheiros de software criam <b>testes automáticos</b> que caçam bugs antes do usuário ver.`
+          : `Na vida real, engenheiros de software criam <b>testes automáticos</b> que caçam bugs antes do usuário ver. Um bug no lugar errado já derrubou foguetes e bancos. Qualidade é coisa séria!<br><br><b>+${score[0]} pontos</b>`,
+        btn:'Próxima fase →',onClick:()=>countdown('FASE 2 · CICLO DE VIDA',startOrder)});
+    }
+  },50);
+  bugTimers.push(tick);
+}
+
+/* ---------- Fase 2: ciclo de vida ---------- */
+const STEPS_NORMAL=[
+  {i:'🧠',n:'Entender o problema',d:'Conversar com quem vai usar. Sem isso, você constrói a coisa errada.'},
+  {i:'📐',n:'Projetar',d:'Desenhar as telas e a arquitetura antes de sair codando.'},
+  {i:'⌨️',n:'Programar',d:'Transformar a ideia em código que funciona.'},
+  {i:'🧪',n:'Testar',d:'Caçar os bugs antes que os usuários encontrem.'},
+  {i:'🚀',n:'Publicar',d:'Colocar no ar para o mundo todo usar.'},
+  {i:'🔧',n:'Evoluir e manter',d:'Corrigir, melhorar e começar o ciclo de novo.'}
+];
+const ORDER_MS=60000;                                     // 1 minuto para montar o ciclo
+const STEPS_HARD=[
+  STEPS_NORMAL[0], STEPS_NORMAL[1], STEPS_NORMAL[2],
+  {i:'👀',n:'Revisar o código',d:'Colegas leem o seu código e apontam melhorias antes dele entrar no projeto.'},
+  STEPS_NORMAL[3],
+  {i:'🔗',n:'Integrar tudo',d:'Juntar o trabalho de todo mundo e rodar os testes automaticamente.'},
+  STEPS_NORMAL[4],
+  {i:'📈',n:'Monitorar e evoluir',d:'Acompanhar o uso, corrigir e começar o ciclo de novo.'}
+];
+function startOrder(){
+  show('order');
+  const n=S.n, hard=S.diff==='hard', steps=hard?STEPS_HARD:STEPS_NORMAL, N=steps.length, MS=ORDER_MS, t0=performance.now();
+  // cada jogador tem o seu próprio tabuleiro: cartas embaralhadas só dele, progresso e pontos separados
+  const st=Array.from({length:n},()=>({ items:shuffle(steps.map((s,k)=>({...s,k,done:false}))), next:0, mistakes:0, pts:0, done:false, bonus:0 }));
+  let over=false, lastSec=99;
+  const pointsOf=P=>Math.max(0,P.next*25-P.mistakes*10);
+  const box=$('.order'), cards=$('#cards'), tl=$('#timeline');
+  box.classList.toggle('duel',n>1); tl.className='timeline'+(n>1?' duel':'');
+  $('#ordHint').textContent = n>1 ? 'Cada um monta o ciclo no seu celular, na ordem certa. Vocês têm 1 minuto!' : 'Toque nas etapas na ordem certa. Você tem 1 minuto! 👉';
+  tl.innerHTML='';
+  const cols=st.map((_,p)=>{                                   // uma linha do tempo por jogador
+    const col=document.createElement('div'); col.className='tcol';
+    if(n>1){ const h=document.createElement('h3'); h.style.color=PCOL[p]; h.id='tc'+p; col.appendChild(h); }
+    const slots=steps.map((s,k)=>{ const sl=document.createElement('div'); sl.className='slot'; sl.innerHTML=`<span class="n">${k+1}</span><span>?</span>`; col.appendChild(sl); return sl; });
+    tl.appendChild(col); return slots;
+  });
+  const left=()=>Math.max(0,MS-(performance.now()-t0));
+  const hud=()=>{
+    $('#ordScore').textContent = n>1 ? `J1 ${st[0].pts} · J2 ${st[1].pts}` : `${st[0].next}/${N} · ${st[0].pts} pts`;
+    if(n>1) st.forEach((P,p)=>{ $('#tc'+p).textContent=`JOGADOR ${p+1} · ${P.next}/${N}${P.done?' ✅':''} · ${P.pts} pts`; });
+  };
+  const viewFor=(p,fx)=>{
+    const P=st[p];
+    if(P.done && n>1) return {screen:'hold',ico:'✅',title:'Ciclo montado!',text:'Você terminou! Aguarde o outro jogador (ou o tempo acabar)…',score:P.pts,opp:st[1-p].pts};
+    return {screen:'order',items:P.items.map(it=>({i:it.i,n:it.n})),done:P.items.map((it,i)=>it.done?i:-1).filter(i=>i>=0),
+            score:n>1?P.pts:undefined,opp:n>1?st[1-p].pts:null,left:Math.round(left()),total:MS,fx};
+  };
+  const pushOne=(p,fx)=>push(viewFor(p,fx),p);
+  const renderCards=()=>{                                       // cartas na tela grande: só no 1 jogador (no duelo ficam nos celulares)
+    cards.innerHTML='';
+    if(n>1) return;
+    st[0].items.forEach((it,idx)=>{
+      const b=document.createElement('button'); b.className='step'+(it.done?' done':''); b.innerHTML=`<span>${it.i}</span>${it.n}`;
+      b.onclick=()=>tap(idx,0); cards.appendChild(b);
+    });
+  };
+  function tap(idx,slot){
+    slot=Math.min(slot|0,n-1);
+    const P=st[slot], it=P.items[idx];
+    if(over||P.done||!it||it.done) return;
+    if(it.k===P.next){
+      it.done=true; sfx.good(P.next);
+      const sl=cols[slot][P.next]; sl.className='slot ok';
+      sl.innerHTML = n>1 ? `<span class="n">${P.next+1}</span><span><b>${it.i} ${it.n}</b></span>` : `<span class="n">${P.next+1}</span><span><b>${it.i} ${it.n}</b>${it.d}</span>`;
+      P.next++; P.pts=pointsOf(P);
+      if(P.next===N){ P.done=true; P.bonus=Math.round(left()/MS*40); }          // terminou: bônus pelo tempo que sobrou
+      renderCards(); hud(); pushOne(slot,'good');
+      if(st.every(x=>x.done)) end();
+    } else {
+      P.mistakes++; P.pts=pointsOf(P); sfx.bad();
+      if(hard){                                                                 // difícil: errou, as cartas que sobram trocam de lugar
+        const idxs=P.items.map((x,i)=>x.done?-1:i).filter(i=>i>=0), vals=shuffle(idxs.map(i=>P.items[i]));
+        idxs.forEach((i,j)=>{ P.items[i]=vals[j] });
+      }
+      renderCards(); hud();
+      cards.querySelectorAll('.step:not(.done)').forEach(b=>b.classList.add('shake'));
+      pushOne(slot,'bad');
+    }
+  }
+  function end(){
+    if(over) return; over=true; clearInterval(timer);
+    const secs=Math.round((performance.now()-t0)/1000);
+    st.forEach((P,p)=>{ S.p[p].order=P.pts+P.bonus; });
+    const line=p=>{ const P=st[p]; return `${P.next} de ${N} etapas · ${P.mistakes} erro(s) · <b>+${P.pts+P.bonus} pts</b>${P.bonus?' (bônus de tempo +'+P.bonus+')':''}`; };
+    setTimeout(()=>{ sfx.win(); panel({ico:'🔁',title: st.every(x=>x.done) ? 'Ciclo montado!' : 'Tempo esgotado!',
+      text: (n>1 ? `<b>Jogador 1:</b> ${line(0)}<br><b>Jogador 2:</b> ${line(1)}` : `${line(0)} em ${Math.min(secs,60)}s`) +
+            `<br><br>Esse ciclo se repete o tempo todo: equipes inteiras trabalham assim, em conjunto, para entregar produtos que milhões de pessoas usam.`,
+      btn:'Próxima fase →',onClick:()=>{
+        panel({ico:'🧬',title:'Fase 3: Qual é o seu perfil dev?',
+          text: n>1 ? 'Sem certo ou errado. Cada um responde no seu celular as 4 perguntas e descobre qual área da Engenharia de Software combina mais com você.'
+                    : 'Sem certo ou errado. Responda 4 perguntas e descubra qual área da Engenharia de Software combina mais com você.',
+          btn:'Descobrir',onClick:()=>countdown('FASE 3 · SEU PERFIL DEV',startQuiz)});
+      }})},700);
+  }
+  const timer=setInterval(()=>{                                 // relógio da fase: fecha sozinho quando o tempo acaba
+    const l=left(), pct=l/MS*100, bar=$('#ordBar'), sec=Math.ceil(l/1000);
+    bar.style.width=pct+'%'; bar.style.background = pct>50?'var(--green)':pct>20?'var(--yellow)':'var(--red)';
+    $('#ordTime').textContent=sec+'s';
+    if(sec<=5 && sec>0 && sec!==lastSec){ lastSec=sec; sfx.warn(); }
+    if(l<=0) end();
+  },100);
+  bugTimers.push(timer);
+  H.step = (idx,slot) => tap(idx,slot);
+  renderCards(); hud(); for(let p=0;p<n;p++) pushOne(p);
+}
+
+/* ---------- Fase 3: perfil ---------- */
+const PROFILES={
+  front:{e:'🎨',t:'Designer de Experiências',d:'Você curte ver as ideias ganharem forma. É o tipo que faz sites e apps que dão vontade de usar.',tags:['Front-end','UX/UI','Web','Mobile']},
+  back:{e:'🏗️',t:'Arquiteto de Sistemas',d:'Você pensa no que ninguém vê: sistemas gigantes que funcionam sem cair, mesmo com milhões de acessos.',tags:['Back-end','Cloud','Banco de Dados','Arquitetura']},
+  ia:{e:'🤖',t:'Cientista de Dados e IA',d:'Você quer ensinar máquinas a pensar e achar padrões onde ninguém enxerga.',tags:['Inteligência Artificial','Machine Learning','Dados','Automação']},
+  games:{e:'🎮',t:'Criador de Mundos',d:'Você quer construir universos, com regras, física e personagens que ganham vida.',tags:['Games','Realidade Virtual','Computação Gráfica','Simulação']},
+  seg:{e:'🛡️',t:'Caçador de Falhas',d:'Você pensa como o vilão para proteger o mocinho: encontra brechas antes dos hackers.',tags:['Segurança','Testes','DevSecOps','Privacidade']}
+};
+const QUIZ=[
+  {q:'Fim de semana livre. Você prefere...',o:[['Deixar a interface de um app linda e fluida','front'],['Entender como o Pix aguenta milhões de pagamentos','back'],['Ensinar o computador a reconhecer imagens','ia'],['Criar um jogo com fases e chefões','games']]},
+  {q:'Qual superpoder você escolheria?',o:[['Ler a mente de quem usa o app','front'],['Prever o futuro com dados','ia'],['Ficar invisível e descobrir segredos (por uma boa causa)','seg'],['Fazer tudo funcionar sem nunca cair','back']]},
+  {q:'O que te dá mais satisfação?',o:[['Quando tudo fica bonito e redondinho','front'],['Achar a falha que ninguém tinha visto','seg'],['Ver o sistema aguentando 1 milhão de acessos','back'],['Ver o personagem pular na hora certa','games']]},
+  {q:'Sua cena de filme favorita tem...',o:[['Hackers invadindo um sistema','seg'],['Um robô aprendendo a sentir','ia'],['Um mundo fantástico para explorar','games'],['Interfaces futuristas estilo Homem de Ferro','front']]}
+];
+function startQuiz(){
+  const n=S.n; let qi=0, qT=0;
+  S.p.forEach(p=>{ p.votes={}; p.lastKey=null; p.quiz=0; });
+  const render=()=>{
+    clearTimeout(qT);
+    $('#dots').innerHTML=QUIZ.map((_,i)=>`<i class="${i<=qi?'on':''}"></i>`).join('');
+    $('#qText').textContent=QUIZ[qi].q;
+    const box=$('#qOpts'); box.innerHTML='';
+    const opts=shuffle(QUIZ[qi].o), shownAt=performance.now(), answered=[false,false];
+    const who=()=>{ $('#qWho').textContent = n>1 ? `Jogador 1 ${answered[0]?'✅':'⌛'}  ·  Jogador 2 ${answered[1]?'✅':'⌛'}` : ''; };
+    const adv=()=>{ clearTimeout(qT); qi++; qi<QUIZ.length?render():finish(); };
+    const answer=(slot,idx)=>{
+      slot=Math.min(slot|0,n-1);
+      if(answered[slot]||!opts[idx]||performance.now()-shownAt<350) return;   // ignora toque duplo
+      const key=opts[idx][1], p=S.p[slot];
+      sfx.tick(); p.votes[key]=(p.votes[key]||0)+1; p.lastKey=key; p.quiz+=25; answered[slot]=true; who();
+      if(answered.slice(0,n).every(Boolean)) adv();
+      else push({screen:'hold',ico:'✅',title:'Resposta enviada!',text:'Aguardando o outro jogador…'},slot);
+    };
+    opts.forEach(([txt,key],i)=>{
+      const b=document.createElement('button'); b.className='opt'; b.textContent=txt;
+      b.onclick=()=>{ if(n===1) answer(0,i) };
+      box.appendChild(b);
+    });
+    H.opt=(i,slot)=>answer(slot,i);                         // celulares usam a mesma ordem desta tela
+    who();
+    for(let i=0;i<n;i++) push({screen:'quiz',n:qi+1,of:QUIZ.length,q:QUIZ[qi].q,opts:opts.map(o=>o[0])},i);
+    if(n>1) qT=setTimeout(adv,20000);                       // duelo: segue mesmo se alguém demorar
+  };
+  show('quiz'); render();
+}
+
+/* ---------- Resultado ---------- */
+function confetti(){
+  if(RM) return;
+  const c=$('#confetti'), x=c.getContext('2d'), cols=['#5ccf93','#5aaee0','#e58fb8','#e3b44f','#ee7a7a'];
+  c.width=innerWidth; c.height=innerHeight;
+  const ps=Array.from({length:150},()=>({x:Math.random()*c.width,y:-20-Math.random()*c.height*.5,vx:rand(-2,2),vy:rand(2,6),r:rand(6,12),rot:rand(0,6),vr:rand(-.2,.2),col:cols[Math.random()*cols.length|0]}));
+  const t0=performance.now();
+  (function f(t){
+    const el=t-t0; x.clearRect(0,0,c.width,c.height);
+    if(el>3500) return;
+    ps.forEach(p=>{ p.x+=p.vx; p.y+=p.vy; p.vy+=.04; p.rot+=p.vr; x.save(); x.translate(p.x,p.y); x.rotate(p.rot); x.fillStyle=p.col; x.globalAlpha=Math.max(0,1-el/3500); x.fillRect(-p.r/2,-p.r/4,p.r,p.r/2); x.restore() });
+    requestAnimationFrame(f);
+  })(t0);
+}
+// empate no quiz: vence o último perfil escolhido entre os empatados; se ele não estiver no empate, sorteia
+function pickProfile(p){
+  const keys=Object.keys(p.votes);
+  if(!keys.length) return Object.keys(PROFILES)[Math.random()*5|0];
+  const max=Math.max(...Object.values(p.votes)), tied=keys.filter(k=>p.votes[k]===max);
+  return tied.includes(p.lastKey) ? p.lastKey : tied[Math.random()*tied.length|0];
+}
+const cleanName = s => String(s||'').trim().replace(/\s+/g,' ').slice(0,14) || 'Anônimo';
+function reportGame(i, modo){                                // estatística do painel do organizador
+  netSend({t:'partida',perfil:S.p[i].key,pontos:S.p[i].total,duracao:Math.round((performance.now()-S.t0)/1000),modo,dif:S.diff});
+}
+function finish(){ S.n>1 ? finishDuel() : finishSolo(); }
+
+function finishSolo(){
+  const P=S.p[0], key=pickProfile(P), p=PROFILES[key], total=totalOf(P);
+  P.key=key; P.total=total; sfx.win(); confetti(); reportGame(0,'solo');
+  $('#total').textContent=total+' pts';
+  $('#pfE').textContent=p.e; $('#pfT').textContent=p.t; $('#pfD').textContent=p.d;
+  $('#pfTags').innerHTML=p.tags.map(t=>`<span>${t}</span>`).join('');
+  $('#cTitle').textContent=`${CONFIG.curso} · ${CONFIG.instituicao}`;
+  $('#cList').innerHTML=CONFIG.destaques.map(d=>`<li><span>${d}</span></li>`).join('');
+  $('#cContact').textContent=CONFIG.contato;
+  $('#nameIn').value=''; $('#nameIn').disabled=false; $('#saveBtn').disabled=false;
+  const padView=(i,extra)=>({screen:'final',total,saved:P.saved,nome:P.name,profile:p,contato:CONFIG.contato,link:CONFIG.link,score:total,curso:CONFIG.curso,inst:CONFIG.instituicao,...extra});
+  const save=name=>{
+    if(P.saved) return;
+    const nm=cleanName(name);
+    saveRank(nm,total,key); P.saved=true; P.name=nm; $('#nameIn').value=nm; $('#nameIn').disabled=true; $('#saveBtn').disabled=true;
+    sfx.good(); drawRank(nm,total); push(padView(0,{fx:'good'}),0);
+  };
+  $('#saveBtn').onclick=()=>save($('#nameIn').value);
+  rankScope='dia'; drawRank();
+  show('final');
+  H.save = save;                                      // nome digitado no celular
+  H.again = goStart;
+  push(padView(0),0);
+}
+function finishDuel(){
+  const [A,B]=S.p;
+  [A,B].forEach(P=>{ P.key=pickProfile(P); P.total=totalOf(P); });
+  const win = A.total>B.total ? 0 : B.total>A.total ? 1 : -1;
+  sfx.win(); confetti(); reportGame(0,'duelo'); reportGame(1,'duelo');
+  $('#dWin').textContent = win<0 ? '🤝 Empate!' : `🏆 Jogador ${win+1} venceu!`;
+  [A,B].forEach((P,i)=>{
+    const pr=PROFILES[P.key];
+    $('#de'+i).textContent=pr.e; $('#dt'+i).textContent=pr.t; $('#dp'+i).textContent=P.total+' pts'; $('#dn'+i).textContent='';
+    $('#db'+i).textContent=`🐞 ${P.bugs} · 🔁 ${P.order} · 🧬 ${P.quiz}`;
+    $('#dc'+i).classList.toggle('win', win===i);
+  });
+  $('#dCurso').textContent=`${CONFIG.curso} · ${CONFIG.instituicao}`;
+  $('#dList').innerHTML=CONFIG.destaques.slice(0,3).map(d=>`<li><span>${d}</span></li>`).join('');
+  $('#dContact').textContent=CONFIG.contato;
+  const padView=(i,extra)=>{
+    const P=S.p[i], O=S.p[1-i];
+    return { screen:'final',total:P.total,saved:P.saved,nome:P.name,profile:PROFILES[P.key],contato:CONFIG.contato,link:CONFIG.link,score:P.total,opp:O.total,
+             duel:{win:win<0?null:win===i,opp:O.total},curso:CONFIG.curso,inst:CONFIG.instituicao,...extra };
+  };
+  const saver=i=>name=>{
+    const P=S.p[i]; if(P.saved) return;
+    const nm=cleanName(name); saveRank(nm,P.total,P.key); P.saved=true; P.name=nm; $('#dn'+i).textContent=nm;
+    sfx.good(); push(padView(i,{fx:'good'}),i);
+  };
+  show('finalDuel');
+  H.save=(v,slot)=>saver(Math.min(slot|0,1))(v);
+  H.again=goStart;
+  $('#dAgain').onclick=goStart;
+  for(let i=0;i<2;i++) push(padView(i),i);
+}
+let rankScope='dia', rankMe=null;
+function drawRank(me,score){
+  if(me!==undefined) rankMe={n:me,s:score};
+  const r=rankList(rankScope).slice(0,5);
+  $('#rank').innerHTML = `<div class="rtabs"><h3>Ranking</h3><button class="tab ${rankScope==='dia'?'on':''}" data-s="dia">Hoje</button><button class="tab ${rankScope==='geral'?'on':''}" data-s="geral">Geral</button></div>` +
+    (r.length ? r.map((x,i)=>`<div class="row ${rankMe&&x.n===rankMe.n&&x.s===rankMe.s?'me':''}"><span>${i+1}. <span class="nm"></span></span><span>${x.s}</span></div>`).join('') : '<div>Salve sua pontuação para abrir o ranking!</div>');
+  $('#rank').querySelectorAll('.nm').forEach((el,i)=>el.textContent=r[i].n);
+  $('#rank').querySelectorAll('.tab').forEach(b=>b.onclick=()=>{ rankScope=b.dataset.s; drawRank() });
+}
+$('#nameIn').addEventListener('keydown',e=>{ if(e.key==='Enter') $('#saveBtn').click(); e.stopPropagation(); });
+$('#again').onclick=goStart;
+
+/* ---------- ferramentas: som, tela cheia, inatividade ---------- */
+$('#mute').onclick=()=>{ muted=!muted; $('#mute').textContent=muted?'🔇':'🔊' };
+const toggleFull=()=>{ document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen().catch(()=>{}) };
+$('#full').onclick=toggleFull;
+addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT') return;
+  if(e.key==='f'||e.key==='F') toggleFull();
+  if(e.key==='m'||e.key==='M') $('#mute').click();
+  if(e.key==='Enter'&&$('#start').classList.contains('active')) $('#play').click();
+});
+// volta para a tela inicial se ninguém mexer por 90s (modo quiosque)
+// (também vale para quem escaneou o QR e foi embora sem começar: a sessão é liberada)
+let idle; const resetIdle=()=>{ clearTimeout(idle); idle=setTimeout(()=>{ if(!$('#start').classList.contains('active') || anyPad()) goStart() },90000) };
+['pointerdown','keydown','pointermove'].forEach(ev=>addEventListener(ev,resetIdle)); resetIdle();
+
+/* ---------- chuva de código no fundo ---------- */
+(function(){
+  const c=$('#rain'), x=c.getContext('2d'), chars='{}[]();=>01<>/&&||if for let fn '.split('');
+  let cols, drops;
+  const size=()=>{ c.width=innerWidth; c.height=innerHeight; cols=Math.ceil(c.width/18); drops=Array.from({length:cols},()=>Math.random()*-50) };
+  addEventListener('resize',size); size();
+  let last=0;
+  function frame(t){
+    if(t-last>60){
+      last=t; x.fillStyle='rgba(10,14,26,.12)'; x.fillRect(0,0,c.width,c.height); x.font='16px monospace';
+      drops.forEach((y,i)=>{
+        x.fillStyle=Math.random()<.04?'#5aaee0':'#5ccf93';
+        x.fillText(chars[Math.random()*chars.length|0],i*18,y*18);
+        drops[i]= y*18>c.height&&Math.random()>.975 ? 0 : y+1;
+      });
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+
+goStart();
+connectNet();
+</script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+{
+  "name": "dev-quest",
+  "version": "1.0.0",
+  "description": "Jogo interativo para feira de profissoes - tela grande + celular como controle",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "qrcode": "^1.5.4",
+    "ws": "^8.22.0"
+  }
+}

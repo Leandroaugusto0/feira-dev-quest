@@ -1,0 +1,6 @@
+node_modules/
+# dados gerados na feira (ranking e estatisticas das partidas)
+data/
+*.log
+# prompt antigo de melhorias (ja implementado)
+PROMPT-MELHORIAS.md
